@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GameRecord } from "@/lib/history";
+import { GameRecordDetail } from "@/components/game/GameRecordDetail";
 
 const DELETE_WIDTH = 84;
 
@@ -14,6 +15,8 @@ export function HistoryTimeline({
   records: GameRecord[];
   onDelete?: (id: string) => void;
 }) {
+  const [detailRecord, setDetailRecord] = useState<GameRecord | null>(null);
+
   if (records.length === 0) {
     return (
       <GlassCard className="text-center opacity-70">
@@ -23,20 +26,34 @@ export function HistoryTimeline({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {records.slice(0, 12).map((record) => (
-        <HistoryRow key={record.id} record={record} onDelete={onDelete} />
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col gap-3">
+        {records.slice(0, 12).map((record) => (
+          <HistoryRow
+            key={record.id}
+            record={record}
+            onDelete={onDelete}
+            onOpenDetail={() => setDetailRecord(record)}
+          />
+        ))}
+      </div>
+      <AnimatePresence>
+        {detailRecord && (
+          <GameRecordDetail record={detailRecord} onClose={() => setDetailRecord(null)} />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
 function HistoryRow({
   record,
   onDelete,
+  onOpenDetail,
 }: {
   record: GameRecord;
   onDelete?: (id: string) => void;
+  onOpenDetail: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const winners = record.players.filter((p) => record.winnerIds.includes(p.id));
@@ -65,7 +82,10 @@ function HistoryRow({
           setOpen(info.offset.x < -DELETE_WIDTH / 2);
         }}
       >
-        <GlassCard className="flex items-center gap-4 !py-4">
+        <GlassCard
+          onClick={() => (open ? setOpen(false) : onOpenDetail())}
+          className="flex items-center gap-4 !py-4 cursor-pointer"
+        >
           <span className="text-3xl">{record.gameEmoji}</span>
           <div className="flex-1 min-w-0">
             <div className="font-semibold truncate">{record.gameName}</div>

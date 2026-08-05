@@ -23,6 +23,9 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
   const submitCumulativeRound = useGameSessionStore((s) => s.submitCumulativeRound);
   const submitBeloteRound = useGameSessionStore((s) => s.submitBeloteRound);
   const submitTarotRound = useGameSessionStore((s) => s.submitTarotRound);
+  const editCumulativeRound = useGameSessionStore((s) => s.editCumulativeRound);
+  const editBeloteRound = useGameSessionStore((s) => s.editBeloteRound);
+  const editTarotRound = useGameSessionStore((s) => s.editTarotRound);
   const undoLastRound = useGameSessionStore((s) => s.undoLastRound);
   const setDealer = useGameSessionStore((s) => s.setDealer);
   const toggleCastMode = useGameSessionStore((s) => s.toggleCastMode);
@@ -108,7 +111,16 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
       <RoundHistoryFeed
         rounds={session.rounds}
         players={session.players}
+        supportsTop={gameDef?.supportsTop}
+        invertedScoring={invertedScoring}
         onUndoLast={() => undoLastRound(id)}
+        onEditCumulative={(roundNumber, points, top) => editCumulativeRound(id, roundNumber, points, top)}
+        onEditBelote={(roundNumber, input, attack, defense) =>
+          editBeloteRound(id, roundNumber, input, attack, defense)
+        }
+        onEditTarot={(roundNumber, input, preneurId, defenderIds, partnerId) =>
+          editTarotRound(id, roundNumber, input, preneurId, defenderIds, partnerId)
+        }
       />
 
       {(session.module === "cumulative" || session.module === "cumulative-inverted") && (

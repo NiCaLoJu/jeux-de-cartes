@@ -10,21 +10,38 @@ export function CumulativeRoundForm({
   supportsTop,
   invertedScoring,
   onSubmit,
+  initialPoints,
+  initialTop,
+  submitLabel = "✅ Valider le tour",
+  onCancel,
 }: {
   players: Player[];
   supportsTop?: boolean;
   invertedScoring?: boolean;
   onSubmit: (points: Record<string, number>, top?: number) => void;
+  initialPoints?: Record<string, number>;
+  initialTop?: number;
+  submitLabel?: string;
+  onCancel?: () => void;
 }) {
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [top, setTop] = useState("");
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    initialPoints
+      ? Object.fromEntries(Object.entries(initialPoints).map(([id, v]) => [id, String(v)]))
+      : {}
+  );
+  const [top, setTop] = useState(initialTop !== undefined ? String(initialTop) : "");
+
+  const allFilled = players.every((p) => (values[p.id] ?? "").trim() !== "");
 
   function handleSubmit() {
+    if (!allFilled) return;
     const points: Record<string, number> = {};
     for (const p of players) points[p.id] = Number(values[p.id] || 0);
     onSubmit(points, supportsTop && top ? Number(top) : undefined);
-    setValues({});
-    setTop("");
+    if (!onCancel) {
+      setValues({});
+      setTop("");
+    }
   }
 
   return (
@@ -63,9 +80,20 @@ export function CumulativeRoundForm({
         ))}
       </div>
 
-      <GlossyButton size="lg" onClick={handleSubmit} className="w-full">
-        ✅ Valider le tour
-      </GlossyButton>
+      {!allFilled && (
+        <p className="text-xs text-rose-500 -mt-2">Renseigne un score pour chaque joueur.</p>
+      )}
+
+      <div className="flex gap-2">
+        {onCancel && (
+          <GlossyButton size="lg" variant="ghost" onClick={onCancel} className="flex-1">
+            Annuler
+          </GlossyButton>
+        )}
+        <GlossyButton size="lg" onClick={handleSubmit} disabled={!allFilled} className="flex-1">
+          {submitLabel}
+        </GlossyButton>
+      </div>
     </GlassCard>
   );
 }

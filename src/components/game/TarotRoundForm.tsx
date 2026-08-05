@@ -26,9 +26,18 @@ const POIGNEES: { id: TarotPoignee; label: string }[] = [
   { id: "triple", label: "Triple (+40)" },
 ];
 
+interface TarotInitial {
+  input: TarotRoundInput;
+  preneurId: string;
+  partnerId?: string | null;
+}
+
 export function TarotRoundForm({
   players,
   onSubmit,
+  initial,
+  submitLabel = "✅ Valider le contrat",
+  onCancel,
 }: {
   players: Player[];
   onSubmit: (
@@ -37,14 +46,17 @@ export function TarotRoundForm({
     defenderIds: string[],
     partnerId?: string | null
   ) => void;
+  initial?: TarotInitial;
+  submitLabel?: string;
+  onCancel?: () => void;
 }) {
-  const [preneurId, setPreneurId] = useState(players[0]?.id ?? "");
-  const [points, setPoints] = useState("50");
-  const [bouts, setBouts] = useState<TarotBouts>(1);
-  const [contract, setContract] = useState<TarotContract>("petite");
-  const [petitAuBout, setPetitAuBout] = useState(false);
-  const [poignee, setPoignee] = useState<TarotPoignee>(null);
-  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [preneurId, setPreneurId] = useState(initial?.preneurId ?? players[0]?.id ?? "");
+  const [points, setPoints] = useState(initial ? String(initial.input.pointsPreneur) : "50");
+  const [bouts, setBouts] = useState<TarotBouts>(initial?.input.bouts ?? 1);
+  const [contract, setContract] = useState<TarotContract>(initial?.input.contract ?? "petite");
+  const [petitAuBout, setPetitAuBout] = useState(initial?.input.petitAuBout ?? false);
+  const [poignee, setPoignee] = useState<TarotPoignee>(initial?.input.poignee ?? null);
+  const [partnerId, setPartnerId] = useState<string | null>(initial?.partnerId ?? null);
 
   const isFivePlayers = players.length === 5;
   const otherPlayers = players.filter((p) => p.id !== preneurId);
@@ -64,10 +76,12 @@ export function TarotRoundForm({
 
   function handleSubmit() {
     onSubmit(input, preneurId, defenderIds, effectivePartnerId);
-    setPoints("50");
-    setPetitAuBout(false);
-    setPoignee(null);
-    setPartnerId(null);
+    if (!onCancel) {
+      setPoints("50");
+      setPetitAuBout(false);
+      setPoignee(null);
+      setPartnerId(null);
+    }
   }
 
   return (
@@ -213,9 +227,16 @@ export function TarotRoundForm({
         </span>
       </div>
 
-      <GlossyButton size="lg" onClick={handleSubmit} className="w-full">
-        ✅ Valider le contrat
-      </GlossyButton>
+      <div className="flex gap-2">
+        {onCancel && (
+          <GlossyButton size="lg" variant="ghost" onClick={onCancel} className="flex-1">
+            Annuler
+          </GlossyButton>
+        )}
+        <GlossyButton size="lg" onClick={handleSubmit} className="flex-1">
+          {submitLabel}
+        </GlossyButton>
+      </div>
     </GlassCard>
   );
 }

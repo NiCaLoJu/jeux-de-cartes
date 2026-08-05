@@ -26,9 +26,24 @@ const SEQUENCE_CHIPS: { id: keyof typeof BELOTE_SEQUENCE_ANNONCES; label: string
   { id: "quinte", label: `Quinte +${BELOTE_SEQUENCE_ANNONCES.quinte}` },
 ];
 
+interface BeloteInitial {
+  input: BeloteRoundInput;
+  attackTeamPlayerIds: string[];
+}
+
+function annonceValueFor(input: BeloteRoundInput | undefined, team: "A" | "B"): string {
+  const total = (input?.annonces ?? [])
+    .filter((a) => a.team === team)
+    .reduce((sum, a) => sum + a.value, 0);
+  return total ? String(total) : "";
+}
+
 export function BeloteRoundForm({
   players,
   onSubmit,
+  initial,
+  submitLabel = "✅ Valider la donne",
+  onCancel,
 }: {
   players: Player[];
   onSubmit: (
@@ -36,23 +51,38 @@ export function BeloteRoundForm({
     attackTeamPlayerIds: string[],
     defenseTeamPlayerIds: string[]
   ) => void;
+  initial?: BeloteInitial;
+  submitLabel?: string;
+  onCancel?: () => void;
 }) {
   const hasFixedTeams = players.some((p) => p.teamId);
 
   const teamA = players.filter((p) => p.teamId === "A");
   const teamB = players.filter((p) => p.teamId === "B");
 
-  const [attackSide, setAttackSide] = useState<BeloteTeam>("A");
-  const [preneurId, setPreneurId] = useState(players[0]?.id ?? "");
-  const [mode, setMode] = useState<BeloteMode>("normal");
-  const [trumpChoice, setTrumpChoice] = useState<TrumpChoice>("pique");
+  const [attackSide, setAttackSide] = useState<BeloteTeam>(() => {
+    if (!initial) return "A";
+    const teamAIds = new Set(teamA.map((p) => p.id));
+    return initial.attackTeamPlayerIds.every((id) => teamAIds.has(id)) ? "A" : "B";
+  });
+  const [preneurId, setPreneurId] = useState(initial?.attackTeamPlayerIds[0] ?? players[0]?.id ?? "");
+  const [mode, setMode] = useState<BeloteMode>(initial?.input.mode ?? "normal");
+  const [trumpChoice, setTrumpChoice] = useState<TrumpChoice>(() => {
+    const c = initial?.input.contractType;
+    if (c === "tout-atout" || c === "sans-atout") return c;
+    return initial?.input.trumpSuit ?? "pique";
+  });
   const contractType: BeloteContractType =
     trumpChoice === "tout-atout" || trumpChoice === "sans-atout" ? trumpChoice : "normal";
   const trumpSuit: BeloteSuit | null = contractType === "normal" ? (trumpChoice as BeloteSuit) : null;
-  const [attackScore, setAttackScore] = useState("100");
-  const [annonceAttack, setAnnonceAttack] = useState("");
-  const [annonceDefense, setAnnonceDefense] = useState("");
-  const [beloteSide, setBeloteSide] = useState<"none" | "attack" | "defense">("none");
+  const [attackScore, setAttackScore] = useState(
+    initial ? String(initial.input.attackScore) : "100"
+  );
+  const [annonceAttack, setAnnonceAttack] = useState(() => annonceValueFor(initial?.input, "A"));
+  const [annonceDefense, setAnnonceDefense] = useState(() => annonceValueFor(initial?.input, "B"));
+  const [beloteSide, setBeloteSide] = useState<"none" | "attack" | "defense">(
+    initial?.input.beloteTeam === "A" ? "attack" : initial?.input.beloteTeam === "B" ? "defense" : "none"
+  );
 
   const attackTeamPlayerIds = hasFixedTeams
     ? (attackSide === "A" ? teamA : teamB).map((p) => p.id)
@@ -91,11 +121,13 @@ export function BeloteRoundForm({
 
   function handleSubmit() {
     onSubmit(previewInput, attackTeamPlayerIds, defenseTeamPlayerIds);
-    setAttackScore("100");
-    setAnnonceAttack("");
-    setAnnonceDefense("");
-    setBeloteSide("none");
-    setMode("normal");
+    if (!onCancel) {
+      setAttackScore("100");
+      setAnnonceAttack("");
+      setAnnonceDefense("");
+      setBeloteSide("none");
+      setMode("normal");
+    }
   }
 
   return (
@@ -266,9 +298,16 @@ export function BeloteRoundForm({
         </span>
       </div>
 
-      <GlossyButton size="lg" onClick={handleSubmit} className="w-full">
-        ✅ Valider la donne
-      </GlossyButton>
+      <div className="flex gap-2">
+        {onCancel && (
+          <GlossyButton size="lg" variant="ghost" onClick={onCancel} className="flex-1">
+            Annuler
+          </GlossyButton>
+        )}
+        <GlossyButton size="lg" onClick={handleSubmit} className="flex-1">
+          {submitLabel}
+        </GlossyButton>
+      </div>
     </GlassCard>
   );
 }

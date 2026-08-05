@@ -35,6 +35,7 @@ export function GameOverCelebration({
       players: ranking.map((p) => ({ id: p.id, name: p.name, total: p.total, rank: p.rank })),
       winnerIds,
       roundsCount: session.rounds.length,
+      rounds: session.rounds,
     }).catch(() => {});
   }, [ranking, session, user]);
 

@@ -89,6 +89,22 @@ interface GameSessionState {
     partnerId?: string | null
   ) => void;
   undoLastRound: (sessionId: string) => void;
+  editCumulativeRound: (sessionId: string, roundNumber: number, points: Record<string, number>, top?: number) => void;
+  editBeloteRound: (
+    sessionId: string,
+    roundNumber: number,
+    input: BeloteRoundInput,
+    attackTeamPlayerIds: string[],
+    defenseTeamPlayerIds: string[]
+  ) => void;
+  editTarotRound: (
+    sessionId: string,
+    roundNumber: number,
+    input: TarotRoundInput,
+    preneurId: string,
+    defenderIds: string[],
+    partnerId?: string | null
+  ) => void;
   setDealer: (sessionId: string, playerId: string) => void;
   toggleCastMode: (sessionId: string) => void;
   finishGame: (sessionId: string) => void;
@@ -97,6 +113,13 @@ interface GameSessionState {
 
 function makeId() {
   return `game_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function replaceRound(session: GameSession, roundNumber: number, newRound: RoundRecord): GameSession {
+  const nextRounds = session.rounds.map((r) => (r.roundNumber === roundNumber ? newRound : r));
+  const nextSession: GameSession = { ...session, rounds: nextRounds };
+  nextSession.totals = recomputeTotals(nextSession);
+  return nextSession;
 }
 
 function recomputeTotals(session: GameSession): Record<string, number> {
@@ -227,6 +250,48 @@ export const useGameSessionStore = create<GameSessionState>()(
           dealerId: lastRound.dealerId ?? session.dealerId,
         };
         nextSession.totals = recomputeTotals(nextSession);
+        set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
+      },
+
+      editCumulativeRound: (sessionId, roundNumber, points, top) => {
+        const session = get().sessions[sessionId];
+        if (!session) return;
+        const existing = session.rounds.find((r) => r.roundNumber === roundNumber);
+        if (!existing || existing.module === "belote" || existing.module === "tarot") return;
+        const nextSession = replaceRound(session, roundNumber, { ...existing, points, top });
+        set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
+      },
+
+      editBeloteRound: (sessionId, roundNumber, input, attackTeamPlayerIds, defenseTeamPlayerIds) => {
+        const session = get().sessions[sessionId];
+        if (!session) return;
+        const existing = session.rounds.find((r) => r.roundNumber === roundNumber);
+        if (!existing || existing.module !== "belote") return;
+        const result = computeBeloteRound(input);
+        const nextSession = replaceRound(session, roundNumber, {
+          ...existing,
+          input,
+          result,
+          attackTeamPlayerIds,
+          defenseTeamPlayerIds,
+        });
+        set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
+      },
+
+      editTarotRound: (sessionId, roundNumber, input, preneurId, defenderIds, partnerId) => {
+        const session = get().sessions[sessionId];
+        if (!session) return;
+        const existing = session.rounds.find((r) => r.roundNumber === roundNumber);
+        if (!existing || existing.module !== "tarot") return;
+        const result = computeTarotRound(input);
+        const nextSession = replaceRound(session, roundNumber, {
+          ...existing,
+          input,
+          result,
+          preneurId,
+          defenderIds,
+          partnerId: partnerId ?? null,
+        });
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
       },
 

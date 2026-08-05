@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db, firebaseEnabled } from "@/lib/firebase";
 import { GameModule } from "@/lib/engine";
+import { RoundRecord } from "@/store/gameSessionStore";
 
 export interface GameRecordPlayer {
   id: string;
@@ -30,6 +31,8 @@ export interface GameRecord {
   players: GameRecordPlayer[];
   winnerIds: string[];
   roundsCount: number;
+  /** Round-by-round breakdown, so the history detail view can show how each score was made. */
+  rounds?: RoundRecord[];
 }
 
 function localKey(uid: string) {
@@ -54,11 +57,15 @@ export async function saveGameRecord(
   uid: string,
   record: Omit<GameRecord, "id">
 ): Promise<GameRecord> {
+  // Firestore rejects `undefined` field values (e.g. an optional `top` on a
+  // cumulative round, or a round's `dealerId`) — a JSON round-trip drops them.
+  const sanitized: Omit<GameRecord, "id"> = JSON.parse(JSON.stringify(record));
+
   if (firebaseEnabled && db) {
-    const ref = await addDoc(collection(db, "users", uid, "games"), record);
-    return { ...record, id: ref.id };
+    const ref = await addDoc(collection(db, "users", uid, "games"), sanitized);
+    return { ...sanitized, id: ref.id };
   }
-  const full: GameRecord = { ...record, id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` };
+  const full: GameRecord = { ...sanitized, id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` };
   const existing = readLocal(uid);
   writeLocal(uid, [full, ...existing]);
   return full;
