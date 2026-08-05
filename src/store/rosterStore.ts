@@ -1,45 +1,50 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { SavedPlayer, deleteSavedPlayer, listRoster, saveSavedPlayer } from "@/lib/roster";
 
-export interface SavedPlayer {
-  id: string;
-  name: string;
-  /** Small square JPEG data URL, or undefined for the initial-letter fallback avatar. */
-  photo?: string;
-}
+export type { SavedPlayer };
 
 interface RosterState {
   roster: SavedPlayer[];
-  addSavedPlayer: (name: string, photo?: string) => SavedPlayer;
-  updateSavedPlayer: (id: string, updates: Partial<Pick<SavedPlayer, "name" | "photo">>) => void;
-  removeSavedPlayer: (id: string) => void;
+  loadedForUid: string | null;
+  loadRoster: (uid: string) => Promise<void>;
+  addSavedPlayer: (uid: string, name: string, photo?: string) => Promise<SavedPlayer>;
+  updateSavedPlayer: (
+    uid: string,
+    id: string,
+    updates: Partial<Pick<SavedPlayer, "name" | "photo">>
+  ) => Promise<void>;
+  removeSavedPlayer: (uid: string, id: string) => Promise<void>;
 }
 
 function makeId() {
   return `roster_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export const useRosterStore = create<RosterState>()(
-  persist(
-    (set, get) => ({
-      roster: [],
+export const useRosterStore = create<RosterState>((set, get) => ({
+  roster: [],
+  loadedForUid: null,
 
-      addSavedPlayer: (name, photo) => {
-        const player: SavedPlayer = { id: makeId(), name: name.trim(), photo };
-        set({ roster: [...get().roster, player] });
-        return player;
-      },
+  loadRoster: async (uid) => {
+    if (get().loadedForUid === uid) return;
+    const roster = await listRoster(uid);
+    set({ roster, loadedForUid: uid });
+  },
 
-      updateSavedPlayer: (id, updates) => {
-        set({
-          roster: get().roster.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-        });
-      },
+  addSavedPlayer: async (uid, name, photo) => {
+    const player: SavedPlayer = { id: makeId(), name: name.trim(), photo };
+    set({ roster: [...get().roster, player] });
+    await saveSavedPlayer(uid, player);
+    return player;
+  },
 
-      removeSavedPlayer: (id) => {
-        set({ roster: get().roster.filter((p) => p.id !== id) });
-      },
-    }),
-    { name: "sbp_roster" }
-  )
-);
+  updateSavedPlayer: async (uid, id, updates) => {
+    set({ roster: get().roster.map((p) => (p.id === id ? { ...p, ...updates } : p)) });
+    const updated = get().roster.find((p) => p.id === id);
+    if (updated) await saveSavedPlayer(uid, updated);
+  },
+
+  removeSavedPlayer: async (uid, id) => {
+    set({ roster: get().roster.filter((p) => p.id !== id) });
+    await deleteSavedPlayer(uid, id);
+  },
+}));

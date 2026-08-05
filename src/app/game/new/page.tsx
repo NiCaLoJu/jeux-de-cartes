@@ -9,6 +9,7 @@ import { GlossyButton } from "@/components/ui/GlossyButton";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { useGameSessionStore } from "@/store/gameSessionStore";
 import { useRosterStore } from "@/store/rosterStore";
+import { useAuthStore } from "@/store/authStore";
 import { resizeImageFile } from "@/lib/imageResize";
 
 function makePlayerId() {
@@ -26,9 +27,11 @@ function NewGameContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const createGame = useGameSessionStore((s) => s.createGame);
+  const user = useAuthStore((s) => s.user);
   const roster = useRosterStore((s) => s.roster);
   const addSavedPlayer = useRosterStore((s) => s.addSavedPlayer);
   const updateSavedPlayer = useRosterStore((s) => s.updateSavedPlayer);
+  const [activeSuggestId, setActiveSuggestId] = useState<string | null>(null);
 
   const preselected = searchParams.get("game");
   const [selectedGame, setSelectedGame] = useState<GameDefinition | null>(
@@ -121,15 +124,15 @@ function NewGameContent() {
 
   async function handlePhotoSelected(file: File | undefined) {
     const playerId = photoTargetRef.current;
-    if (!file || !playerId) return;
+    if (!file || !playerId || !user) return;
     const photo = await resizeImageFile(file);
     setPlayers((prev) => prev.map((p) => (p.id === playerId ? { ...p, photo } : p)));
     const player = players.find((p) => p.id === playerId);
     if (player?.name.trim()) {
       if (roster.some((r) => r.id === playerId)) {
-        updateSavedPlayer(playerId, { photo });
+        updateSavedPlayer(user.uid, playerId, { photo });
       } else {
-        addSavedPlayer(player.name, photo);
+        addSavedPlayer(user.uid, player.name, photo);
       }
     }
   }
@@ -139,13 +142,23 @@ function NewGameContent() {
     setNewRosterPhoto(await resizeImageFile(file));
   }
 
-  function confirmAddToRoster() {
-    if (!newRosterName.trim()) return;
-    const saved = addSavedPlayer(newRosterName, newRosterPhoto);
+  async function confirmAddToRoster() {
+    if (!newRosterName.trim() || !user) return;
+    const saved = await addSavedPlayer(user.uid, newRosterName, newRosterPhoto);
     toggleRosterPlayer(saved.id, saved.name, saved.photo);
     setNewRosterName("");
     setNewRosterPhoto(undefined);
     setAddingToRoster(false);
+  }
+
+  function selectSuggestion(draftId: string, suggestion: { id: string; name: string; photo?: string }) {
+    setPlayers((prev) => {
+      if (prev.some((p) => p.id === suggestion.id && p.id !== draftId)) return prev;
+      return prev.map((p) =>
+        p.id === draftId ? { id: suggestion.id, name: suggestion.name, teamId: p.teamId, photo: suggestion.photo } : p
+      );
+    });
+    setActiveSuggestId(null);
   }
 
   function handleStart() {
@@ -155,6 +168,21 @@ function NewGameContent() {
       name: p.name.trim(),
       teamId: needsTeams ? p.teamId : undefined,
     }));
+
+    // Anyone typed in by hand (not already a saved roster entry, and not
+    // just a re-typed name that matches one) is remembered from here on,
+    // so next time their name autocompletes.
+    if (user) {
+      for (const p of validNames) {
+        const alreadySaved = roster.some(
+          (r) => r.id === p.id || r.name.trim().toLowerCase() === p.name.trim().toLowerCase()
+        );
+        if (!alreadySaved) {
+          addSavedPlayer(user.uid, p.name, p.photo);
+        }
+      }
+    }
+
     const id = createGame(selectedGame, finalPlayers);
     router.push(`/game/${id}/play`);
   }
@@ -306,12 +334,45 @@ function NewGameContent() {
                 >
                   <PlayerAvatar name={player.name || "?"} photo={player.photo} size={40} />
                 </button>
-                <input
-                  value={player.name}
-                  onChange={(e) => updatePlayerName(player.id, e.target.value)}
-                  placeholder={`Joueur ${idx + 1}`}
-                  className="flex-1 rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
-                />
+                <div className="relative flex-1">
+                  <input
+                    value={player.name}
+                    onChange={(e) => updatePlayerName(player.id, e.target.value)}
+                    onFocus={() => setActiveSuggestId(player.id)}
+                    onBlur={() => setTimeout(() => setActiveSuggestId(null), 150)}
+                    placeholder={`Joueur ${idx + 1}`}
+                    autoComplete="off"
+                    className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+                  />
+                  {activeSuggestId === player.id &&
+                    player.name.trim().length > 0 &&
+                    (() => {
+                      const query = player.name.trim().toLowerCase();
+                      const suggestions = roster.filter(
+                        (r) =>
+                          r.id !== player.id &&
+                          r.name.toLowerCase().startsWith(query) &&
+                          !players.some((p) => p.id === r.id)
+                      );
+                      if (suggestions.length === 0) return null;
+                      return (
+                        <div className="absolute z-10 mt-1 w-full glass-squircle !rounded-2xl !p-1.5 flex flex-col gap-0.5">
+                          {suggestions.map((s) => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => selectSuggestion(player.id, s)}
+                              className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer text-left"
+                            >
+                              <PlayerAvatar name={s.name} photo={s.photo} size={28} />
+                              <span className="text-sm">{s.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                </div>
                 {needsTeams && (
                   <div className="flex gap-1">
                     {(["A", "B"] as const).map((team) => (

@@ -6,5 +6,10 @@ service cloud.firestore {
     match /users/{userId}/games/{gameId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Saved player roster (name + photo), for autocomplete/personalization: users/{uid}/roster/{playerId}
+    match /users/{userId}/roster/{playerId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }
