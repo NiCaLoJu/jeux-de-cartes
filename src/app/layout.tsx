@@ -12,6 +12,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Score Board Premium",
   description: "Le tableau de score des soirées jeux — glossy, animé, prêt pour le cast TV.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Score Board",
+  },
 };
 
 export const viewport: Viewport = {
