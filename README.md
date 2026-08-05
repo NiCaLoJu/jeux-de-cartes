@@ -39,26 +39,25 @@ Firestore activés) :
 cp .env.example .env.local
 ```
 
-## Déploiement (Firebase App Hosting)
+## Déploiement (Firebase Hosting + GitHub Actions)
 
-Le projet Firebase `jeux-de-cartes-a34f7` est configuré pour être déployé via
-[Firebase App Hosting](https://firebase.google.com/docs/app-hosting), qui
-build et déploie automatiquement à chaque push sur la branche connectée —
-aucune commande de déploiement manuelle n'est nécessaire une fois branché.
+Le déploiement (Hosting + règles Firestore) est automatisé via
+[`.github/workflows/firebase-deploy.yml`](./.github/workflows/firebase-deploy.yml) :
+chaque push sur `main` (ou `claude/score-board-premium-app-l30088`) build et
+déploie automatiquement, sans commande manuelle.
 
-Étape unique (à faire depuis la console, ce n'est pas automatisable) :
+**Seule étape requise** : fournir un compte de service Google Cloud pouvant
+déployer sur le projet `jeux-de-cartes-a34f7`, via un secret GitHub nommé
+`FIREBASE_SERVICE_ACCOUNT`.
 
-1. Aller sur la [console Firebase](https://console.firebase.google.com/project/jeux-de-cartes-a34f7/apphosting) → **App Hosting** → *Get started / Add backend*.
-2. Connecter le compte GitHub, autoriser l'app Firebase GitHub sur le dépôt `NiCaLoJu/jeux-de-cartes`.
-3. Choisir la branche à déployer en continu (ex. `main` une fois cette branche mergée), la racine du dépôt, laisser Firebase détecter Next.js.
-4. Valider — le premier rollout se lance, puis chaque push sur la branche connectée redéploie automatiquement.
+1. [Console Google Cloud → Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts?project=jeux-de-cartes-a34f7) → *Create Service Account*.
+2. Rôle : `Editor` (suffisant pour Hosting + Firestore + Cloud Run/Functions utilisés par le rendu SSR Next.js).
+3. Onglet *Keys* → *Add Key* → *Create new key* → JSON → télécharger.
+4. Dans le repo GitHub : *Settings → Secrets and variables → Actions → New repository secret*, nom `FIREBASE_SERVICE_ACCOUNT`, coller le contenu du JSON.
+5. Relancer le workflow (`Actions` → *Deploy to Firebase* → *Run workflow*), ou pousser un commit — le déploiement se fait tout seul ensuite.
 
-La config `NEXT_PUBLIC_FIREBASE_*` est déjà fournie dans [`apphosting.yaml`](./apphosting.yaml)
-(ces valeurs sont la config web publique du projet Firebase, pas des secrets).
-
-Les règles Firestore ([`firestore.rules`](./firestore.rules)) doivent être
-déployées séparément via la CLI Firebase (`firebase deploy --only
-firestore:rules`) ou la console, App Hosting ne s'en occupe pas.
+La config `NEXT_PUBLIC_FIREBASE_*` est déjà présente dans le workflow (ce sont
+des valeurs publiques de config web Firebase, pas des secrets).
 
 ## Scripts
 
