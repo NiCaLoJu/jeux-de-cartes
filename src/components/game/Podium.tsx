@@ -1,0 +1,88 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { RankedPlayer } from "@/lib/engine";
+import { GlassCard } from "@/components/ui/GlassCard";
+
+const PODIUM_STYLE = {
+  1: { height: "h-40", order: "order-2", color: "from-gold/60 to-amber-300/60", medal: "🥇" },
+  2: { height: "h-28", order: "order-1", color: "from-silver/60 to-slate-200/60", medal: "🥈" },
+  3: { height: "h-20", order: "order-3", color: "from-bronze/60 to-orange-300/60", medal: "🥉" },
+} as const;
+
+export function Podium({ ranking }: { ranking: RankedPlayer[] }) {
+  const top3 = ranking.filter((p) => p.rank <= 3).slice(0, 3);
+  const others = ranking.filter((p) => p.rank > 3);
+
+  return (
+    <div className="flex flex-col gap-8 items-center">
+      <motion.div
+        initial={{ scale: 0, rotate: -15 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+        className="text-7xl drop-shadow-lg"
+      >
+        🏆
+      </motion.div>
+
+      <motion.h1
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="text-2xl sm:text-3xl font-bold text-center text-shadow-soft"
+      >
+        {top3[0]?.name} remporte la partie !
+      </motion.h1>
+
+      <div className="flex items-end justify-center gap-3 sm:gap-5 w-full max-w-lg">
+        {top3.map((player) => {
+          const style = PODIUM_STYLE[player.rank as 1 | 2 | 3];
+          return (
+            <motion.div
+              key={player.id}
+              className={`flex-1 flex flex-col items-center gap-2 ${style.order}`}
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: player.rank * 0.15, type: "spring", stiffness: 160, damping: 16 }}
+            >
+              <span className="text-3xl">{style.medal}</span>
+              <span className="font-semibold text-sm sm:text-base text-center truncate max-w-full px-1">
+                {player.name}
+              </span>
+              <span className="text-xs opacity-70">{player.total} pts</span>
+              {player.rank === ranking.length && ranking.length > 1 && (
+                <span className="rounded-full bg-sky-100 dark:bg-sky-400/10 text-sky-600 dark:text-sky-300 px-2 py-0.5 text-[10px]">
+                  🌧️ Meilleur effort
+                </span>
+              )}
+              <div
+                className={`w-full ${style.height} rounded-t-2xl glass-squircle !rounded-t-2xl !rounded-b-none bg-gradient-to-t ${style.color}`}
+              />
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {others.length > 0 && (
+        <div className="w-full max-w-md flex flex-col gap-2">
+          {others.map((player) => (
+            <GlassCard key={player.id} className="!py-3 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="opacity-60 text-sm">#{player.rank}</span>
+                <span className="font-medium">{player.name}</span>
+              </span>
+              <span className="flex items-center gap-2 text-sm opacity-70">
+                {player.rank === ranking.length && (
+                  <span className="rounded-full bg-sky-100 dark:bg-sky-400/10 text-sky-600 dark:text-sky-300 px-2 py-0.5 text-xs">
+                    🌧️ Meilleur effort
+                  </span>
+                )}
+                {player.total} pts
+              </span>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
