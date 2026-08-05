@@ -75,7 +75,7 @@ export function GameRecordDetail({ record, onClose }: { record: GameRecord; onCl
             <h3 className="text-xs font-semibold opacity-60 uppercase tracking-wide">Détail des manches</h3>
             <AnimatePresence initial={false}>
               {record.rounds.map((round) => {
-                const summary = summarizeRound(round, record.players);
+                const summary = summarizeRound(round, record.players, record.invertedScoring);
                 const isOpen = expandedRound === round.roundNumber;
                 return (
                   <GlassCard key={round.roundNumber} className="!py-3">

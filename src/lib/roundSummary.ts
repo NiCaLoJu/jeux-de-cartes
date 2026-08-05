@@ -3,6 +3,7 @@
 
 import { Player } from "@/lib/engine";
 import { BELOTE_SUITS } from "@/lib/engine/belote";
+import { roundWinnerIds } from "@/lib/roundWinner";
 import { RoundRecord } from "@/store/gameSessionStore";
 
 const TAROT_CONTRACT_LABELS: Record<string, string> = {
@@ -27,7 +28,11 @@ export interface RoundSummary {
   positive: boolean;
 }
 
-export function summarizeRound(round: RoundRecord, players: Player[]): RoundSummary {
+export function summarizeRound(
+  round: RoundRecord,
+  players: Player[],
+  invertedScoring = false
+): RoundSummary {
   const dealer = round.dealerId ? nameOf(players, round.dealerId) : null;
   const dealerSuffix = dealer ? ` · 🃏 ${dealer}` : "";
 
@@ -66,14 +71,11 @@ export function summarizeRound(round: RoundRecord, players: Player[]): RoundSumm
 
   // cumulative / cumulative-inverted
   const entries = Object.entries(round.points);
-  const best = entries.reduce<{ id: string; value: number } | null>((acc, [id, value]) => {
-    if (!acc || value > acc.value) return { id, value };
-    return acc;
-  }, null);
+  const winners = roundWinnerIds(round, invertedScoring);
   return {
     title: entries.map(([id, value]) => `${nameOf(players, id)} ${value > 0 ? "+" : ""}${value}`).join(" · "),
     subtitle: `Manche${dealerSuffix}`,
-    badge: best ? `🏅 ${nameOf(players, best.id)}` : "",
+    badge: winners.length > 0 ? `🏅 ${namesOf(players, winners)}` : "",
     positive: true,
   };
 }

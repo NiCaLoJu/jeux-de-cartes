@@ -11,6 +11,8 @@ export interface GameDefinition {
   maxPlayers: number;
   /** Scrabble "duplicate" TOP % réussite tracking (Module A variant). */
   supportsTop?: boolean;
+  /** "Divers" : direction du score (plus petit/plus grand gagne) choisie à la création de la partie. */
+  supportsInvertedToggle?: boolean;
 }
 
 export const GAME_LIBRARY: GameDefinition[] = [
@@ -44,6 +46,7 @@ export const GAME_LIBRARY: GameDefinition[] = [
     gradient: "from-amber-200 to-orange-300",
     minPlayers: 2,
     maxPlayers: 10,
+    supportsInvertedToggle: true,
   },
   {
     id: "cinq-rois",

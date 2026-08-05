@@ -42,7 +42,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
 
   const gameDef = getGameById(session.gameId);
   const ranking = getRanking(session);
-  const invertedScoring = session.module === "cumulative-inverted";
+  const invertedScoring = session.invertedScoring ?? session.module === "cumulative-inverted";
   const isTeamGame = session.players.some((p) => p.teamId);
 
   if (session.status === "finished") {

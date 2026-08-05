@@ -33,6 +33,8 @@ export interface GameRecord {
   roundsCount: number;
   /** Round-by-round breakdown, so the history detail view can show how each score was made. */
   rounds?: RoundRecord[];
+  /** true = the lowest total won this game (needed to replay round-winner badges correctly). */
+  invertedScoring?: boolean;
 }
 
 function localKey(uid: string) {

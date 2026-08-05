@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BeloteRoundInput } from "@/lib/engine/belote";
 import { TarotRoundInput } from "@/lib/engine/tarot";
 import { Player } from "@/lib/engine";
 import { summarizeRound } from "@/lib/roundSummary";
+import { roundWinnerIds } from "@/lib/roundWinner";
 import { RoundRecord } from "@/store/gameSessionStore";
+import { useRosterStore } from "@/store/rosterStore";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { RoundDetail } from "@/components/game/RoundDetail";
 import { CumulativeRoundForm } from "@/components/game/CumulativeRoundForm";
 import { BeloteRoundForm } from "@/components/game/BeloteRoundForm";
@@ -54,6 +57,7 @@ export function RoundHistoryFeed({
       <h3 className="font-semibold text-sm opacity-70 uppercase tracking-wide px-1">
         Historique de la partie
       </h3>
+      <RoundWinsPanel rounds={rounds} players={players} invertedScoring={invertedScoring} />
       <AnimatePresence initial={false}>
         {reversed.map((round, i) => (
           <RoundRow
@@ -70,6 +74,73 @@ export function RoundHistoryFeed({
             onEditTarot={onEditTarot}
           />
         ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function RoundWinsPanel({
+  rounds,
+  players,
+  invertedScoring,
+}: {
+  rounds: RoundRecord[];
+  players: Player[];
+  invertedScoring?: boolean;
+}) {
+  const roster = useRosterStore((s) => s.roster);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const winCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of players) counts[p.id] = 0;
+    for (const round of rounds) {
+      for (const id of roundWinnerIds(round, invertedScoring ?? false)) {
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [rounds, players, invertedScoring]);
+
+  const selected = players.find((p) => p.id === selectedId);
+
+  return (
+    <div className="flex flex-col gap-2 px-1">
+      <div className="flex gap-3 overflow-x-auto pb-1">
+        {players.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => setSelectedId((v) => (v === p.id ? null : p.id))}
+            className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer"
+          >
+            <PlayerAvatar
+              name={p.name}
+              photo={roster.find((r) => r.id === p.id)?.photo}
+              size={40}
+              className={selectedId === p.id ? "ring-4 ring-violet-400" : "opacity-80"}
+            />
+            <span className="text-xs max-w-[4rem] truncate">{p.name}</span>
+          </button>
+        ))}
+      </div>
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -6, height: 0 }}
+            className="overflow-hidden"
+          >
+            <GlassCard className="!py-2.5 text-sm flex items-center justify-center gap-2">
+              🏆 <strong>{selected.name}</strong> a gagné{" "}
+              <strong>
+                {winCounts[selected.id] ?? 0} manche{(winCounts[selected.id] ?? 0) > 1 ? "s" : ""}
+              </strong>{" "}
+              sur {rounds.length}
+            </GlassCard>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
@@ -111,7 +182,7 @@ function RoundRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
-  const summary = summarizeRound(round, players);
+  const summary = summarizeRound(round, players, invertedScoring);
 
   return (
     <motion.div

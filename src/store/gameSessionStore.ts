@@ -62,6 +62,8 @@ export interface GameSession {
   finishedAt?: string;
   /** Joueur qui distribue la manche en cours ; tourne automatiquement après chaque manche. */
   dealerId: string;
+  /** true = le score le plus bas gagne. Par défaut dérivé du module, mais réglable pour "Divers". */
+  invertedScoring: boolean;
 }
 
 function nextPlayerId(players: Player[], currentId: string): string {
@@ -73,7 +75,11 @@ function nextPlayerId(players: Player[], currentId: string): string {
 
 interface GameSessionState {
   sessions: Record<string, GameSession>;
-  createGame: (game: GameDefinition, players: { id: string; name: string; teamId?: string }[]) => string;
+  createGame: (
+    game: GameDefinition,
+    players: { id: string; name: string; teamId?: string }[],
+    invertedScoring?: boolean
+  ) => string;
   submitCumulativeRound: (sessionId: string, points: Record<string, number>, top?: number) => void;
   submitBeloteRound: (
     sessionId: string,
@@ -143,7 +149,7 @@ export const useGameSessionStore = create<GameSessionState>()(
     (set, get) => ({
       sessions: {},
 
-      createGame: (game, players) => {
+      createGame: (game, players, invertedScoring) => {
         const id = makeId();
         const totals: Record<string, number> = {};
         const normalizedPlayers: Player[] = players.map((p) => ({
@@ -167,6 +173,7 @@ export const useGameSessionStore = create<GameSessionState>()(
           castMode: false,
           createdAt: new Date().toISOString(),
           dealerId: normalizedPlayers[0]?.id ?? "",
+          invertedScoring: invertedScoring ?? game.module === "cumulative-inverted",
         };
         set((state) => ({ sessions: { ...state.sessions, [id]: session } }));
         return id;
@@ -342,9 +349,7 @@ export const useGameSessionStore = create<GameSessionState>()(
 );
 
 export function getRanking(session: GameSession): RankedPlayer[] {
-  if (session.module === "cumulative-inverted") {
-    return rankInverted(session.totals, session.players);
-  }
-  // belote/tarot/cumulative all use "highest wins"
-  return rankCumulative(session.totals, session.players);
+  // Older persisted sessions predate `invertedScoring`; fall back to the module default.
+  const inverted = session.invertedScoring ?? session.module === "cumulative-inverted";
+  return inverted ? rankInverted(session.totals, session.players) : rankCumulative(session.totals, session.players);
 }

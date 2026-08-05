@@ -36,6 +36,7 @@ export function GameOverCelebration({
       winnerIds,
       roundsCount: session.rounds.length,
       rounds: session.rounds,
+      invertedScoring: session.invertedScoring,
     }).catch(() => {});
   }, [ranking, session, user]);
 

@@ -43,6 +43,7 @@ function NewGameContent() {
   ]);
   const [newRosterName, setNewRosterName] = useState("");
   const [addingToRoster, setAddingToRoster] = useState(false);
+  const [invertedScoring, setInvertedScoring] = useState(false);
 
   const photoTargetRef = useRef<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -183,7 +184,11 @@ function NewGameContent() {
       }
     }
 
-    const id = createGame(selectedGame, finalPlayers);
+    const id = createGame(
+      selectedGame,
+      finalPlayers,
+      selectedGame.supportsInvertedToggle ? invertedScoring : undefined
+    );
     router.push(`/game/${id}/play`);
   }
 
@@ -222,10 +227,39 @@ function NewGameContent() {
         </div>
       </section>
 
+      {selectedGame?.supportsInvertedToggle && (
+        <section>
+          <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">2. Sens du score</h2>
+          <GlassCard className="flex flex-col gap-2 !py-3">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setInvertedScoring(false)}
+                className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
+                  !invertedScoring ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                }`}
+              >
+                🔼 Le plus de points gagne
+              </button>
+              <button
+                type="button"
+                onClick={() => setInvertedScoring(true)}
+                className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
+                  invertedScoring ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                }`}
+              >
+                🔽 Le moins de points gagne
+              </button>
+            </div>
+          </GlassCard>
+        </section>
+      )}
+
       {selectedGame && (
         <section>
           <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">
-            2. Joueurs ({selectedGame.minPlayers}–{selectedGame.maxPlayers})
+            {selectedGame.supportsInvertedToggle ? "3" : "2"}. Joueurs ({selectedGame.minPlayers}–
+            {selectedGame.maxPlayers})
           </h2>
 
           {(roster.length > 0 || addingToRoster) && (
