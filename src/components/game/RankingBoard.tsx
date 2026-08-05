@@ -6,6 +6,14 @@ import { GlassCard } from "@/components/ui/GlassCard";
 
 const MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
+/** Pastel palette from best rank to worst; cycles if there are more players. */
+const RANK_PASTELS = [
+  "from-[var(--pastel-mint)] to-[var(--pastel-sky)]",
+  "from-[var(--pastel-sky)] to-[var(--pastel-lavender)]",
+  "from-[var(--pastel-lavender)] to-[var(--pastel-peach)]",
+  "from-[var(--pastel-peach)] to-[var(--pastel-peach)]",
+];
+
 export function RankingBoard({
   ranking,
   cast = false,
@@ -21,8 +29,9 @@ export function RankingBoard({
   return (
     <div className="flex flex-col gap-3">
       <AnimatePresence initial={false}>
-        {ranking.map((player) => {
+        {ranking.map((player, index) => {
           const progress = Math.min(100, Math.max(4, (Math.abs(player.total) / maxTotal) * 100));
+          const pastel = RANK_PASTELS[Math.min(index, RANK_PASTELS.length - 1)];
           return (
             <motion.div
               key={player.id}
@@ -55,7 +64,7 @@ export function RankingBoard({
                   </div>
                   <div className="h-2.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
                     <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-400"
+                      className={`h-full rounded-full bg-gradient-to-r ${pastel}`}
                       animate={{ width: `${progress}%` }}
                       transition={{ type: "spring", stiffness: 120, damping: 20 }}
                     />

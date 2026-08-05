@@ -4,6 +4,8 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   getDocs,
   orderBy,
   query,
@@ -60,6 +62,15 @@ export async function saveGameRecord(
   const existing = readLocal(uid);
   writeLocal(uid, [full, ...existing]);
   return full;
+}
+
+export async function deleteGameRecord(uid: string, recordId: string): Promise<void> {
+  if (firebaseEnabled && db) {
+    await deleteDoc(doc(db, "users", uid, "games", recordId));
+    return;
+  }
+  const existing = readLocal(uid);
+  writeLocal(uid, existing.filter((r) => r.id !== recordId));
 }
 
 export async function listGameRecords(uid: string): Promise<GameRecord[]> {

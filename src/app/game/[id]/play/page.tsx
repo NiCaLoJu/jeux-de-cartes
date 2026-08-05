@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useGameSessionStore, getRanking } from "@/store/gameSessionStore";
 import { getGameById } from "@/data/games";
 import { RankingBoard } from "@/components/game/RankingBoard";
+import { TeamRankingBoard } from "@/components/game/TeamRankingBoard";
+import { DealerBanner } from "@/components/game/DealerBanner";
+import { RoundHistoryFeed } from "@/components/game/RoundHistoryFeed";
 import { DeltaBanner } from "@/components/game/DeltaBanner";
 import { CumulativeRoundForm } from "@/components/game/CumulativeRoundForm";
 import { BeloteRoundForm } from "@/components/game/BeloteRoundForm";
@@ -21,6 +24,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
   const submitBeloteRound = useGameSessionStore((s) => s.submitBeloteRound);
   const submitTarotRound = useGameSessionStore((s) => s.submitTarotRound);
   const undoLastRound = useGameSessionStore((s) => s.undoLastRound);
+  const setDealer = useGameSessionStore((s) => s.setDealer);
   const toggleCastMode = useGameSessionStore((s) => s.toggleCastMode);
   const finishGame = useGameSessionStore((s) => s.finishGame);
 
@@ -36,6 +40,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
   const gameDef = getGameById(session.gameId);
   const ranking = getRanking(session);
   const invertedScoring = session.module === "cumulative-inverted";
+  const isTeamGame = session.players.some((p) => p.teamId);
 
   if (session.status === "finished") {
     return <GameOverCelebration session={session} ranking={ranking} />;
@@ -56,7 +61,11 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
         <h1 className="text-3xl font-bold text-shadow-soft">{session.gameName}</h1>
         <DeltaBanner ranking={ranking} cast />
         <div className="w-full max-w-2xl">
-          <RankingBoard ranking={ranking} cast invertedScoring={invertedScoring} />
+          {isTeamGame ? (
+            <TeamRankingBoard ranking={ranking} cast invertedScoring={invertedScoring} />
+          ) : (
+            <RankingBoard ranking={ranking} cast invertedScoring={invertedScoring} />
+          )}
         </div>
       </div>
     );
@@ -82,19 +91,25 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
 
+      <DealerBanner
+        players={session.players}
+        dealerId={session.dealerId}
+        onChangeDealer={(playerId) => setDealer(id, playerId)}
+      />
+
       <DeltaBanner ranking={ranking} />
 
-      <RankingBoard ranking={ranking} invertedScoring={invertedScoring} />
-
-      {session.rounds.length > 0 && (
-        <button
-          type="button"
-          onClick={() => undoLastRound(id)}
-          className="self-center text-xs opacity-50 hover:opacity-80 cursor-pointer underline"
-        >
-          Annuler la dernière manche
-        </button>
+      {isTeamGame ? (
+        <TeamRankingBoard ranking={ranking} invertedScoring={invertedScoring} />
+      ) : (
+        <RankingBoard ranking={ranking} invertedScoring={invertedScoring} />
       )}
+
+      <RoundHistoryFeed
+        rounds={session.rounds}
+        players={session.players}
+        onUndoLast={() => undoLastRound(id)}
+      />
 
       {(session.module === "cumulative" || session.module === "cumulative-inverted") && (
         <CumulativeRoundForm

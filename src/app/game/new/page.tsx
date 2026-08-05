@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { GAME_LIBRARY, GameDefinition } from "@/data/games";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlossyButton } from "@/components/ui/GlossyButton";
@@ -64,6 +64,19 @@ function NewGameContent() {
     setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, teamId } : p)));
   }
 
+  function shuffleTeams() {
+    setPlayers((prev) => {
+      const ids = prev.map((p) => p.id);
+      for (let i = ids.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [ids[i], ids[j]] = [ids[j], ids[i]];
+      }
+      const half = Math.ceil(ids.length / 2);
+      const teamOf = new Map(ids.map((id, idx) => [id, idx < half ? "A" : "B"] as const));
+      return prev.map((p) => ({ ...p, teamId: teamOf.get(p.id) }));
+    });
+  }
+
   function addPlayer() {
     if (!selectedGame || players.length >= selectedGame.maxPlayers) return;
     setPlayers((prev) => [...prev, { id: makePlayerId(), name: "" }]);
@@ -115,7 +128,16 @@ function NewGameContent() {
           </h2>
           <GlassCard className="flex flex-col gap-3">
             {players.map((player, idx) => (
-              <div key={player.id} className="flex items-center gap-2">
+              <div
+                key={player.id}
+                className={`flex items-center gap-2 rounded-2xl transition-colors ${
+                  needsTeams && player.teamId
+                    ? player.teamId === "A"
+                      ? "bg-[var(--pastel-mint)]/40"
+                      : "bg-[var(--pastel-peach)]/40"
+                    : ""
+                }`}
+              >
                 <input
                   value={player.name}
                   onChange={(e) => updatePlayerName(player.id, e.target.value)}
@@ -131,7 +153,9 @@ function NewGameContent() {
                         onClick={() => updatePlayerTeam(player.id, team)}
                         className={`w-9 h-9 rounded-full text-xs font-bold cursor-pointer transition-colors ${
                           player.teamId === team
-                            ? "bg-violet-500 text-white"
+                            ? team === "A"
+                              ? "bg-emerald-400 text-white"
+                              : "bg-orange-400 text-white"
                             : "bg-black/5 dark:bg-white/10"
                         }`}
                       >
@@ -162,9 +186,52 @@ function NewGameContent() {
               </button>
             )}
             {needsTeams && (
-              <p className="text-xs opacity-60">Belote à 4 : formez deux équipes de 2 (A vs B).</p>
+              <>
+                <button
+                  type="button"
+                  onClick={shuffleTeams}
+                  className="self-center text-xs font-medium text-violet-500 cursor-pointer flex items-center gap-1"
+                >
+                  🔀 Mélanger les équipes
+                </button>
+                <p className="text-xs opacity-60 text-center">
+                  Belote à 4 : formez deux équipes de 2 (A vs B).
+                </p>
+              </>
             )}
           </GlassCard>
+
+          {needsTeams && (
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              {(["A", "B"] as const).map((team) => {
+                const members = players.filter((p) => p.teamId === team && p.name.trim());
+                return (
+                  <motion.div
+                    key={team}
+                    layout
+                    className={`rounded-2xl p-3 text-center ${
+                      team === "A" ? "bg-[var(--pastel-mint)]/50" : "bg-[var(--pastel-peach)]/50"
+                    }`}
+                  >
+                    <div className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-1">
+                      Équipe {team}
+                    </div>
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      <motion.div
+                        key={members.map((m) => m.id).join(",") || "empty"}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="text-sm font-medium"
+                      >
+                        {members.length > 0 ? members.map((m) => m.name).join(" & ") : "—"}
+                      </motion.div>
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 

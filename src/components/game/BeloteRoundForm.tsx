@@ -4,21 +4,19 @@ import { useMemo, useState } from "react";
 import { Player } from "@/lib/engine";
 import {
   BELOTE_SEQUENCE_ANNONCES,
+  BELOTE_SUITS,
   BELOTE_TOTAL_POINTS,
   BeloteContractType,
   BeloteMode,
   BeloteRoundInput,
+  BeloteSuit,
   BeloteTeam,
   isDedans,
 } from "@/lib/engine/belote";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlossyButton } from "@/components/ui/GlossyButton";
 
-const CONTRACT_TYPES: { id: BeloteContractType; label: string }[] = [
-  { id: "normal", label: "Normal" },
-  { id: "tout-atout", label: "Tout Atout" },
-  { id: "sans-atout", label: "Sans Atout" },
-];
+type TrumpChoice = BeloteSuit | "tout-atout" | "sans-atout";
 
 const SEQUENCE_CHIPS: { id: keyof typeof BELOTE_SEQUENCE_ANNONCES; label: string }[] = [
   { id: "tierce", label: `Tierce +${BELOTE_SEQUENCE_ANNONCES.tierce}` },
@@ -45,7 +43,10 @@ export function BeloteRoundForm({
   const [attackSide, setAttackSide] = useState<BeloteTeam>("A");
   const [preneurId, setPreneurId] = useState(players[0]?.id ?? "");
   const [mode, setMode] = useState<BeloteMode>("normal");
-  const [contractType, setContractType] = useState<BeloteContractType>("normal");
+  const [trumpChoice, setTrumpChoice] = useState<TrumpChoice>("pique");
+  const contractType: BeloteContractType =
+    trumpChoice === "tout-atout" || trumpChoice === "sans-atout" ? trumpChoice : "normal";
+  const trumpSuit: BeloteSuit | null = contractType === "normal" ? (trumpChoice as BeloteSuit) : null;
   const [attackScore, setAttackScore] = useState("100");
   const [annonceAttack, setAnnonceAttack] = useState("");
   const [annonceDefense, setAnnonceDefense] = useState("");
@@ -78,6 +79,7 @@ export function BeloteRoundForm({
       attackScore: attackScoreNumber,
       mode,
       contractType,
+      trumpSuit,
       annonces: [
         ...(annonceAttack ? [{ team: "A" as const, value: Number(annonceAttack) }] : []),
         ...(annonceDefense ? [{ team: "B" as const, value: Number(annonceDefense) }] : []),
@@ -90,7 +92,6 @@ export function BeloteRoundForm({
     setAnnonceDefense("");
     setBeloteSide("none");
     setMode("normal");
-    setContractType("normal");
   }
 
   return (
@@ -125,16 +126,35 @@ export function BeloteRoundForm({
       )}
 
       <div>
-        <label className="text-xs opacity-60 block mb-1">Contrat</label>
-        <div className="grid grid-cols-3 gap-2">
-          {CONTRACT_TYPES.map((c) => (
-            <ModeButton
-              key={c.id}
-              active={contractType === c.id}
-              label={c.label}
-              onClick={() => setContractType(c.id)}
-            />
+        <label className="text-xs opacity-60 block mb-1">Atout</label>
+        <div className="grid grid-cols-4 gap-2 mb-2">
+          {BELOTE_SUITS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setTrumpChoice(s.id)}
+              className={`rounded-xl py-2.5 text-lg font-semibold cursor-pointer transition-colors flex items-center justify-center gap-1 ${
+                trumpChoice === s.id
+                  ? "bg-violet-500 text-white"
+                  : `bg-black/5 dark:bg-white/10 ${s.color === "red" ? "text-rose-500" : ""}`
+              }`}
+              aria-label={s.label}
+            >
+              {s.symbol}
+            </button>
           ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <ModeButton
+            active={trumpChoice === "tout-atout"}
+            label="Tout Atout"
+            onClick={() => setTrumpChoice("tout-atout")}
+          />
+          <ModeButton
+            active={trumpChoice === "sans-atout"}
+            label="Sans Atout"
+            onClick={() => setTrumpChoice("sans-atout")}
+          />
         </div>
       </div>
 

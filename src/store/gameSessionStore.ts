@@ -24,6 +24,7 @@ export type RoundRecord =
       roundNumber: number;
       points: Record<string, number>;
       top?: number;
+      dealerId?: string;
     }
   | {
       module: "belote";
@@ -32,6 +33,7 @@ export type RoundRecord =
       result: BeloteRoundResult;
       attackTeamPlayerIds: string[];
       defenseTeamPlayerIds: string[];
+      dealerId?: string;
     }
   | {
       module: "tarot";
@@ -41,6 +43,7 @@ export type RoundRecord =
       preneurId: string;
       defenderIds: string[];
       partnerId?: string | null;
+      dealerId?: string;
     };
 
 export interface GameSession {
@@ -57,6 +60,15 @@ export interface GameSession {
   castMode: boolean;
   createdAt: string;
   finishedAt?: string;
+  /** Joueur qui distribue la manche en cours ; tourne automatiquement après chaque manche. */
+  dealerId: string;
+}
+
+function nextPlayerId(players: Player[], currentId: string): string {
+  if (players.length === 0) return currentId;
+  const idx = players.findIndex((p) => p.id === currentId);
+  if (idx === -1) return players[0].id;
+  return players[(idx + 1) % players.length].id;
 }
 
 interface GameSessionState {
@@ -77,6 +89,7 @@ interface GameSessionState {
     partnerId?: string | null
   ) => void;
   undoLastRound: (sessionId: string) => void;
+  setDealer: (sessionId: string, playerId: string) => void;
   toggleCastMode: (sessionId: string) => void;
   finishGame: (sessionId: string) => void;
   deleteSession: (sessionId: string) => void;
@@ -130,6 +143,7 @@ export const useGameSessionStore = create<GameSessionState>()(
           status: "active",
           castMode: false,
           createdAt: new Date().toISOString(),
+          dealerId: normalizedPlayers[0]?.id ?? "",
         };
         set((state) => ({ sessions: { ...state.sessions, [id]: session } }));
         return id;
@@ -143,9 +157,14 @@ export const useGameSessionStore = create<GameSessionState>()(
           roundNumber: session.rounds.length + 1,
           points,
           top,
+          dealerId: session.dealerId,
         };
         const nextRounds = [...session.rounds, round];
-        const nextSession: GameSession = { ...session, rounds: nextRounds };
+        const nextSession: GameSession = {
+          ...session,
+          rounds: nextRounds,
+          dealerId: nextPlayerId(session.players, session.dealerId),
+        };
         nextSession.totals = recomputeTotals(nextSession);
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
       },
@@ -161,9 +180,14 @@ export const useGameSessionStore = create<GameSessionState>()(
           result,
           attackTeamPlayerIds,
           defenseTeamPlayerIds,
+          dealerId: session.dealerId,
         };
         const nextRounds = [...session.rounds, round];
-        const nextSession: GameSession = { ...session, rounds: nextRounds };
+        const nextSession: GameSession = {
+          ...session,
+          rounds: nextRounds,
+          dealerId: nextPlayerId(session.players, session.dealerId),
+        };
         nextSession.totals = recomputeTotals(nextSession);
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
       },
@@ -180,9 +204,14 @@ export const useGameSessionStore = create<GameSessionState>()(
           preneurId,
           defenderIds,
           partnerId: partnerId ?? null,
+          dealerId: session.dealerId,
         };
         const nextRounds = [...session.rounds, round];
-        const nextSession: GameSession = { ...session, rounds: nextRounds };
+        const nextSession: GameSession = {
+          ...session,
+          rounds: nextRounds,
+          dealerId: nextPlayerId(session.players, session.dealerId),
+        };
         nextSession.totals = recomputeTotals(nextSession);
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
       },
@@ -191,9 +220,22 @@ export const useGameSessionStore = create<GameSessionState>()(
         const session = get().sessions[sessionId];
         if (!session || session.rounds.length === 0) return;
         const nextRounds = session.rounds.slice(0, -1);
-        const nextSession: GameSession = { ...session, rounds: nextRounds };
+        const lastRound = session.rounds[session.rounds.length - 1];
+        const nextSession: GameSession = {
+          ...session,
+          rounds: nextRounds,
+          dealerId: lastRound.dealerId ?? session.dealerId,
+        };
         nextSession.totals = recomputeTotals(nextSession);
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
+      },
+
+      setDealer: (sessionId, playerId) => {
+        const session = get().sessions[sessionId];
+        if (!session) return;
+        set((state) => ({
+          sessions: { ...state.sessions, [sessionId]: { ...session, dealerId: playerId } },
+        }));
       },
 
       toggleCastMode: (sessionId) => {

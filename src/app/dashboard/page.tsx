@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
-import { GameRecord, listGameRecords } from "@/lib/history";
+import { GameRecord, deleteGameRecord, listGameRecords } from "@/lib/history";
 import { GameLibraryCarousel } from "@/components/game/GameLibraryCarousel";
 import { ActiveGames } from "@/components/game/ActiveGames";
 import { HistoryTimeline } from "@/components/game/HistoryTimeline";
@@ -21,6 +21,15 @@ export default function DashboardPage() {
       .then(setRecords)
       .finally(() => setLoadingHistory(false));
   }, [user]);
+
+  function handleDeleteRecord(recordId: string) {
+    if (!user) return;
+    setRecords((prev) => prev.filter((r) => r.id !== recordId));
+    deleteGameRecord(user.uid, recordId).catch(() => {
+      // Best-effort: reload from source of truth if the delete failed server-side.
+      listGameRecords(user.uid).then(setRecords);
+    });
+  }
 
   return (
     <div className="mx-auto max-w-5xl flex flex-col gap-10 pt-4">
@@ -55,7 +64,7 @@ export default function DashboardPage() {
         {loadingHistory ? (
           <div className="opacity-60 text-sm">Chargement de l&apos;historique…</div>
         ) : (
-          <HistoryTimeline records={records} />
+          <HistoryTimeline records={records} onDelete={handleDeleteRecord} />
         )}
       </section>
     </div>

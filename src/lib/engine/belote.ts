@@ -15,6 +15,15 @@ export type BeloteMode = "normal" | "dedans" | "capot";
 /** "normal" = un atout choisi. "tout-atout" : toutes les couleurs valent atout (total 258).
  * "sans-atout" : aucune couleur ne vaut atout (total 130). */
 export type BeloteContractType = "normal" | "tout-atout" | "sans-atout";
+/** Couleur d'atout choisie, uniquement pertinent quand contractType === "normal". */
+export type BeloteSuit = "trefle" | "carreau" | "coeur" | "pique";
+
+export const BELOTE_SUITS: { id: BeloteSuit; label: string; symbol: string; color: "red" | "black" }[] = [
+  { id: "trefle", label: "Trèfle", symbol: "♣", color: "black" },
+  { id: "carreau", label: "Carreau", symbol: "♦", color: "red" },
+  { id: "coeur", label: "Cœur", symbol: "♥", color: "red" },
+  { id: "pique", label: "Pique", symbol: "♠", color: "black" },
+];
 
 export const BELOTE_TOTAL_POINTS: Record<BeloteContractType, number> = {
   normal: BELOTE_BASE_POINTS,
@@ -41,6 +50,8 @@ export interface BeloteRoundInput {
   mode: BeloteMode;
   /** Défaut : "normal" (un atout). */
   contractType?: BeloteContractType;
+  /** Couleur choisie quand contractType === "normal" (metadata, n'affecte pas le calcul). */
+  trumpSuit?: BeloteSuit | null;
   annonces?: BeloteAnnonce[];
   /** Équipe qui bénéficie du bonus Belote/Rebelote (+20), le cas échéant. */
   beloteTeam?: BeloteTeam | null;
@@ -51,6 +62,7 @@ export interface BeloteRoundResult {
   defendingTeam: BeloteTeam;
   mode: BeloteMode;
   contractType: BeloteContractType;
+  trumpSuit: BeloteSuit | null;
   success: boolean;
   /** Points de plis avant annonces/belote. */
   cardPoints: { attack: number; defense: number };
@@ -117,6 +129,7 @@ export function computeBeloteRound(input: BeloteRoundInput): BeloteRoundResult {
     defendingTeam,
     mode: input.mode,
     contractType,
+    trumpSuit: contractType === "normal" ? input.trumpSuit ?? null : null,
     success,
     cardPoints: { attack: attackCardPoints, defense: defenseCardPoints },
     teamPoints: { A: teamPoints.A, B: teamPoints.B },
