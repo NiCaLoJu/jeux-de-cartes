@@ -2,38 +2,23 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { RankedPlayer } from "@/lib/engine";
+import { groupTeams } from "@/lib/teamRanking";
 
 const TEAM_GRADIENTS = [
   "from-[var(--pastel-mint)] to-[var(--pastel-sky)]",
   "from-[var(--pastel-peach)] to-[var(--pastel-lavender)]",
 ];
 
-interface Team {
-  id: string;
-  players: RankedPlayer[];
-  total: number;
-}
-
 export function TeamRankingBoard({
   ranking,
   cast = false,
-  invertedScoring = false,
 }: {
   ranking: RankedPlayer[];
   cast?: boolean;
-  invertedScoring?: boolean;
 }) {
-  const teamsMap = new Map<string, RankedPlayer[]>();
-  for (const p of ranking) {
-    const key = p.teamId ?? p.id;
-    const arr = teamsMap.get(key) ?? [];
-    arr.push(p);
-    teamsMap.set(key, arr);
-  }
-
-  const teams: Team[] = Array.from(teamsMap.entries())
-    .map(([id, players]) => ({ id, players, total: players[0]?.total ?? 0 }))
-    .sort((a, b) => (invertedScoring ? a.total - b.total : b.total - a.total));
+  // groupTeams() sorts by `rank`, which rankCumulative()/rankInverted() already
+  // computed in the right direction upstream — no need to re-sort by raw total here.
+  const teams = groupTeams(ranking);
 
   const isTie = teams.length > 1 && teams[0].total === teams[1].total;
 

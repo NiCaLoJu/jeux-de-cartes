@@ -2,10 +2,12 @@
 
 import { motion } from "framer-motion";
 import { RankedPlayer } from "@/lib/engine";
+import { groupTeams } from "@/lib/teamRanking";
 
 export function DeltaBanner({ ranking, cast }: { ranking: RankedPlayer[]; cast?: boolean }) {
-  if (ranking.length < 2) return null;
-  const [leader, second] = ranking;
+  const entries = groupTeams(ranking);
+  if (entries.length < 2) return null;
+  const [leader, second] = entries;
   const gap = Math.abs(leader.total - second.total);
 
   return (
@@ -21,7 +23,8 @@ export function DeltaBanner({ ranking, cast }: { ranking: RankedPlayer[]; cast?:
         <span>⚖️ Égalité en tête !</span>
       ) : (
         <span>
-          🚀 <strong>{leader.name}</strong> mène de <strong>{gap}</strong> pt{gap > 1 ? "s" : ""}
+          🚀 <strong>{leader.name}</strong> {leader.players.length > 1 ? "mènent" : "mène"} de{" "}
+          <strong>{gap}</strong> pt{gap > 1 ? "s" : ""}
         </span>
       )}
     </motion.div>

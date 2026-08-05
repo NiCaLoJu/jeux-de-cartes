@@ -62,7 +62,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
         <DeltaBanner ranking={ranking} cast />
         <div className="w-full max-w-2xl">
           {isTeamGame ? (
-            <TeamRankingBoard ranking={ranking} cast invertedScoring={invertedScoring} />
+            <TeamRankingBoard ranking={ranking} cast />
           ) : (
             <RankingBoard ranking={ranking} cast invertedScoring={invertedScoring} />
           )}
@@ -100,7 +100,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
       <DeltaBanner ranking={ranking} />
 
       {isTeamGame ? (
-        <TeamRankingBoard ranking={ranking} invertedScoring={invertedScoring} />
+        <TeamRankingBoard ranking={ranking} />
       ) : (
         <RankingBoard ranking={ranking} invertedScoring={invertedScoring} />
       )}

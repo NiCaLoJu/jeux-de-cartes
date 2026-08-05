@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { RankedPlayer } from "@/lib/engine";
+import { groupTeams } from "@/lib/teamRanking";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 const PODIUM_STYLE = {
@@ -11,8 +12,10 @@ const PODIUM_STYLE = {
 } as const;
 
 export function Podium({ ranking }: { ranking: RankedPlayer[] }) {
-  const top3 = ranking.filter((p) => p.rank <= 3).slice(0, 3);
-  const others = ranking.filter((p) => p.rank > 3);
+  const entries = groupTeams(ranking);
+  const top3 = entries.filter((e) => e.rank <= 3).slice(0, 3);
+  const others = entries.filter((e) => e.rank > 3);
+  const lastRank = entries[entries.length - 1]?.rank;
 
   return (
     <div className="flex flex-col gap-8 items-center">
@@ -31,26 +34,26 @@ export function Podium({ ranking }: { ranking: RankedPlayer[] }) {
         transition={{ delay: 0.4 }}
         className="text-2xl sm:text-3xl font-bold text-center text-shadow-soft"
       >
-        {top3[0]?.name} remporte la partie !
+        {top3[0]?.name} {top3[0]?.players.length > 1 ? "remportent" : "remporte"} la partie !
       </motion.h1>
 
       <div className="flex items-end justify-center gap-3 sm:gap-5 w-full max-w-lg">
-        {top3.map((player) => {
-          const style = PODIUM_STYLE[player.rank as 1 | 2 | 3];
+        {top3.map((entry) => {
+          const style = PODIUM_STYLE[entry.rank as 1 | 2 | 3];
           return (
             <motion.div
-              key={player.id}
+              key={entry.id}
               className={`flex-1 flex flex-col items-center gap-2 ${style.order}`}
               initial={{ y: 80, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: player.rank * 0.15, type: "spring", stiffness: 160, damping: 16 }}
+              transition={{ delay: entry.rank * 0.15, type: "spring", stiffness: 160, damping: 16 }}
             >
               <span className="text-3xl">{style.medal}</span>
               <span className="font-semibold text-sm sm:text-base text-center truncate max-w-full px-1">
-                {player.name}
+                {entry.name}
               </span>
-              <span className="text-xs opacity-70">{player.total} pts</span>
-              {player.rank === ranking.length && ranking.length > 1 && (
+              <span className="text-xs opacity-70">{entry.total} pts</span>
+              {entry.rank === lastRank && entries.length > 1 && (
                 <span className="rounded-full bg-sky-100 dark:bg-sky-400/10 text-sky-600 dark:text-sky-300 px-2 py-0.5 text-[10px]">
                   🌧️ Meilleur effort
                 </span>
@@ -65,19 +68,19 @@ export function Podium({ ranking }: { ranking: RankedPlayer[] }) {
 
       {others.length > 0 && (
         <div className="w-full max-w-md flex flex-col gap-2">
-          {others.map((player) => (
-            <GlassCard key={player.id} className="!py-3 flex items-center justify-between">
+          {others.map((entry) => (
+            <GlassCard key={entry.id} className="!py-3 flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <span className="opacity-60 text-sm">#{player.rank}</span>
-                <span className="font-medium">{player.name}</span>
+                <span className="opacity-60 text-sm">#{entry.rank}</span>
+                <span className="font-medium">{entry.name}</span>
               </span>
               <span className="flex items-center gap-2 text-sm opacity-70">
-                {player.rank === ranking.length && (
+                {entry.rank === lastRank && (
                   <span className="rounded-full bg-sky-100 dark:bg-sky-400/10 text-sky-600 dark:text-sky-300 px-2 py-0.5 text-xs">
                     🌧️ Meilleur effort
                   </span>
                 )}
-                {player.total} pts
+                {entry.total} pts
               </span>
             </GlassCard>
           ))}
