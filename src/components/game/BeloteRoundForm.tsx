@@ -2,9 +2,29 @@
 
 import { useMemo, useState } from "react";
 import { Player } from "@/lib/engine";
-import { BeloteMode, BeloteRoundInput, BeloteTeam, isDedans } from "@/lib/engine/belote";
+import {
+  BELOTE_SEQUENCE_ANNONCES,
+  BELOTE_TOTAL_POINTS,
+  BeloteContractType,
+  BeloteMode,
+  BeloteRoundInput,
+  BeloteTeam,
+  isDedans,
+} from "@/lib/engine/belote";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlossyButton } from "@/components/ui/GlossyButton";
+
+const CONTRACT_TYPES: { id: BeloteContractType; label: string }[] = [
+  { id: "normal", label: "Normal" },
+  { id: "tout-atout", label: "Tout Atout" },
+  { id: "sans-atout", label: "Sans Atout" },
+];
+
+const SEQUENCE_CHIPS: { id: keyof typeof BELOTE_SEQUENCE_ANNONCES; label: string }[] = [
+  { id: "tierce", label: `Tierce +${BELOTE_SEQUENCE_ANNONCES.tierce}` },
+  { id: "quarte", label: `Quarte +${BELOTE_SEQUENCE_ANNONCES.quarte}` },
+  { id: "quinte", label: `Quinte +${BELOTE_SEQUENCE_ANNONCES.quinte}` },
+];
 
 export function BeloteRoundForm({
   players,
@@ -25,6 +45,7 @@ export function BeloteRoundForm({
   const [attackSide, setAttackSide] = useState<BeloteTeam>("A");
   const [preneurId, setPreneurId] = useState(players[0]?.id ?? "");
   const [mode, setMode] = useState<BeloteMode>("normal");
+  const [contractType, setContractType] = useState<BeloteContractType>("normal");
   const [attackScore, setAttackScore] = useState("100");
   const [annonceAttack, setAnnonceAttack] = useState("");
   const [annonceDefense, setAnnonceDefense] = useState("");
@@ -37,19 +58,26 @@ export function BeloteRoundForm({
     ? (attackSide === "A" ? teamB : teamA).map((p) => p.id)
     : players.filter((p) => p.id !== preneurId).map((p) => p.id);
 
+  const totalPoints = BELOTE_TOTAL_POINTS[contractType];
   const attackScoreNumber = Number(attackScore || 0);
-  const suggestDedans = mode === "normal" && isDedans(attackScoreNumber);
+  const suggestDedans = mode === "normal" && isDedans(attackScoreNumber, contractType);
   const liveDefenseScore = useMemo(() => {
     if (mode === "capot") return 0;
-    if (mode === "dedans") return 162;
-    return 162 - Math.max(0, Math.min(162, attackScoreNumber));
-  }, [mode, attackScoreNumber]);
+    if (mode === "dedans") return totalPoints;
+    return totalPoints - Math.max(0, Math.min(totalPoints, attackScoreNumber));
+  }, [mode, attackScoreNumber, totalPoints]);
+
+  function addAnnonce(side: "attack" | "defense", value: number) {
+    if (side === "attack") setAnnonceAttack((prev) => String(Number(prev || 0) + value));
+    else setAnnonceDefense((prev) => String(Number(prev || 0) + value));
+  }
 
   function handleSubmit() {
     const input: BeloteRoundInput = {
       attackingTeam: "A",
       attackScore: attackScoreNumber,
       mode,
+      contractType,
       annonces: [
         ...(annonceAttack ? [{ team: "A" as const, value: Number(annonceAttack) }] : []),
         ...(annonceDefense ? [{ team: "B" as const, value: Number(annonceDefense) }] : []),
@@ -62,6 +90,7 @@ export function BeloteRoundForm({
     setAnnonceDefense("");
     setBeloteSide("none");
     setMode("normal");
+    setContractType("normal");
   }
 
   return (
@@ -96,6 +125,20 @@ export function BeloteRoundForm({
       )}
 
       <div>
+        <label className="text-xs opacity-60 block mb-1">Contrat</label>
+        <div className="grid grid-cols-3 gap-2">
+          {CONTRACT_TYPES.map((c) => (
+            <ModeButton
+              key={c.id}
+              active={contractType === c.id}
+              label={c.label}
+              onClick={() => setContractType(c.id)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div>
         <label className="text-xs opacity-60 block mb-1">Résultat</label>
         <div className="grid grid-cols-3 gap-2">
           <ModeButton active={mode === "normal"} label="Normal" onClick={() => setMode("normal")} />
@@ -106,7 +149,9 @@ export function BeloteRoundForm({
 
       {mode === "normal" && (
         <div>
-          <label className="text-xs opacity-60 block mb-1">Score de l&apos;attaque</label>
+          <label className="text-xs opacity-60 block mb-1">
+            Score de l&apos;attaque <span className="opacity-50">(/ {totalPoints})</span>
+          </label>
           <input
             type="number"
             inputMode="numeric"
@@ -122,7 +167,7 @@ export function BeloteRoundForm({
                 onClick={() => setMode("dedans")}
                 className="text-rose-500 font-medium cursor-pointer"
               >
-                &lt; 82 → appliquer &quot;Dedans&quot; ?
+                Chute → appliquer &quot;Dedans&quot; ?
               </button>
             )}
           </div>
@@ -132,6 +177,18 @@ export function BeloteRoundForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs opacity-60 block mb-1">Annonces attaque</label>
+          <div className="flex flex-wrap gap-1 mb-1.5">
+            {SEQUENCE_CHIPS.map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => addAnnonce("attack", BELOTE_SEQUENCE_ANNONCES[chip.id])}
+                className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer bg-black/5 dark:bg-white/10"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
           <input
             type="number"
             inputMode="numeric"
@@ -143,6 +200,18 @@ export function BeloteRoundForm({
         </div>
         <div>
           <label className="text-xs opacity-60 block mb-1">Annonces défense</label>
+          <div className="flex flex-wrap gap-1 mb-1.5">
+            {SEQUENCE_CHIPS.map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => addAnnonce("defense", BELOTE_SEQUENCE_ANNONCES[chip.id])}
+                className="rounded-lg px-2 py-1 text-xs font-medium cursor-pointer bg-black/5 dark:bg-white/10"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
           <input
             type="number"
             inputMode="numeric"

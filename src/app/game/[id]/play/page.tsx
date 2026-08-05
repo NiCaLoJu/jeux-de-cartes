@@ -115,7 +115,9 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
       {session.module === "tarot" && (
         <TarotRoundForm
           players={session.players}
-          onSubmit={(input, preneurId, defenderIds) => submitTarotRound(id, input, preneurId, defenderIds)}
+          onSubmit={(input, preneurId, defenderIds, partnerId) =>
+            submitTarotRound(id, input, preneurId, defenderIds, partnerId)
+          }
         />
       )}
     </div>

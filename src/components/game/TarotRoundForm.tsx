@@ -31,7 +31,12 @@ export function TarotRoundForm({
   onSubmit,
 }: {
   players: Player[];
-  onSubmit: (input: TarotRoundInput, preneurId: string, defenderIds: string[]) => void;
+  onSubmit: (
+    input: TarotRoundInput,
+    preneurId: string,
+    defenderIds: string[],
+    partnerId?: string | null
+  ) => void;
 }) {
   const [preneurId, setPreneurId] = useState(players[0]?.id ?? "");
   const [points, setPoints] = useState("50");
@@ -39,6 +44,10 @@ export function TarotRoundForm({
   const [contract, setContract] = useState<TarotContract>("petite");
   const [petitAuBout, setPetitAuBout] = useState(false);
   const [poignee, setPoignee] = useState<TarotPoignee>(null);
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+
+  const isFivePlayers = players.length === 5;
+  const otherPlayers = players.filter((p) => p.id !== preneurId);
 
   const input: TarotRoundInput = {
     pointsPreneur: Number(points || 0),
@@ -50,13 +59,15 @@ export function TarotRoundForm({
 
   const preview = computeTarotRound(input);
 
-  const defenderIds = players.filter((p) => p.id !== preneurId).map((p) => p.id);
+  const defenderIds = otherPlayers.map((p) => p.id);
+  const effectivePartnerId = isFivePlayers ? partnerId : null;
 
   function handleSubmit() {
-    onSubmit(input, preneurId, defenderIds);
+    onSubmit(input, preneurId, defenderIds, effectivePartnerId);
     setPoints("50");
     setPetitAuBout(false);
     setPoignee(null);
+    setPartnerId(null);
   }
 
   return (
@@ -70,7 +81,10 @@ export function TarotRoundForm({
             <button
               key={p.id}
               type="button"
-              onClick={() => setPreneurId(p.id)}
+              onClick={() => {
+                setPreneurId(p.id);
+                setPartnerId(null);
+              }}
               className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
                 preneurId === p.id ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
               }`}
@@ -80,6 +94,40 @@ export function TarotRoundForm({
           ))}
         </div>
       </div>
+
+      {isFivePlayers && (
+        <div>
+          <label className="text-xs opacity-60 block mb-1">Roi appelé (partenaire)</label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setPartnerId(null)}
+              className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
+                partnerId === null ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+              }`}
+            >
+              Garde seul (son roi)
+            </button>
+            {otherPlayers.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPartnerId(p.id)}
+                className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
+                  partnerId === p.id ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                }`}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs opacity-50 mt-1">
+            {partnerId
+              ? "2 contre 3 : le preneur touche double, l'appelé touche simple."
+              : "1 contre 4 : le preneur a son propre roi, il joue seul."}
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div>

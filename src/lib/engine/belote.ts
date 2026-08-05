@@ -7,9 +7,27 @@ export const BELOTE_BASE_POINTS = 162;
 export const BELOTE_SUCCESS_THRESHOLD = 82;
 export const BELOTE_CAPOT_POINTS = 252;
 export const BELOTE_BONUS = 20;
+/** Bonus "dix de der" + marge intégré au capot, appliqué quel que soit le contrat (162 -> 252). */
+export const BELOTE_CAPOT_BONUS = BELOTE_CAPOT_POINTS - BELOTE_BASE_POINTS;
 
 export type BeloteTeam = "A" | "B";
 export type BeloteMode = "normal" | "dedans" | "capot";
+/** "normal" = un atout choisi. "tout-atout" : toutes les couleurs valent atout (total 258).
+ * "sans-atout" : aucune couleur ne vaut atout (total 130). */
+export type BeloteContractType = "normal" | "tout-atout" | "sans-atout";
+
+export const BELOTE_TOTAL_POINTS: Record<BeloteContractType, number> = {
+  normal: BELOTE_BASE_POINTS,
+  "tout-atout": 258,
+  "sans-atout": 130,
+};
+
+/** Annonces de suite standard (indépendantes de la belote/rebelote). */
+export const BELOTE_SEQUENCE_ANNONCES = {
+  tierce: 20,
+  quarte: 50,
+  quinte: 100,
+} as const;
 
 export interface BeloteAnnonce {
   team: BeloteTeam;
@@ -18,9 +36,11 @@ export interface BeloteAnnonce {
 
 export interface BeloteRoundInput {
   attackingTeam: BeloteTeam;
-  /** Score de l'attaque (points bruts, 0-162). Ignoré si mode !== "normal". */
+  /** Score de l'attaque (points bruts). Ignoré si mode !== "normal". */
   attackScore: number;
   mode: BeloteMode;
+  /** Défaut : "normal" (un atout). */
+  contractType?: BeloteContractType;
   annonces?: BeloteAnnonce[];
   /** Équipe qui bénéficie du bonus Belote/Rebelote (+20), le cas échéant. */
   beloteTeam?: BeloteTeam | null;
@@ -30,6 +50,7 @@ export interface BeloteRoundResult {
   attackingTeam: BeloteTeam;
   defendingTeam: BeloteTeam;
   mode: BeloteMode;
+  contractType: BeloteContractType;
   success: boolean;
   /** Points de plis avant annonces/belote. */
   cardPoints: { attack: number; defense: number };
@@ -37,9 +58,17 @@ export interface BeloteRoundResult {
   teamPoints: { A: number; B: number };
 }
 
+function totalPointsFor(contractType: BeloteContractType): number {
+  return BELOTE_TOTAL_POINTS[contractType];
+}
+
+function thresholdFor(contractType: BeloteContractType): number {
+  return Math.floor(totalPointsFor(contractType) / 2) + 1;
+}
+
 /** true si le score saisi entraînerait une chute (utile pour proposer le bouton "Dedans" côté UI). */
-export function isDedans(attackScore: number): boolean {
-  return attackScore < BELOTE_SUCCESS_THRESHOLD;
+export function isDedans(attackScore: number, contractType: BeloteContractType = "normal"): boolean {
+  return attackScore < thresholdFor(contractType);
 }
 
 function otherTeam(team: BeloteTeam): BeloteTeam {
@@ -47,6 +76,8 @@ function otherTeam(team: BeloteTeam): BeloteTeam {
 }
 
 export function computeBeloteRound(input: BeloteRoundInput): BeloteRoundResult {
+  const contractType = input.contractType ?? "normal";
+  const total = totalPointsFor(contractType);
   const defendingTeam = otherTeam(input.attackingTeam);
 
   let attackCardPoints: number;
@@ -54,18 +85,18 @@ export function computeBeloteRound(input: BeloteRoundInput): BeloteRoundResult {
   let success: boolean;
 
   if (input.mode === "capot") {
-    attackCardPoints = BELOTE_CAPOT_POINTS;
+    attackCardPoints = total + BELOTE_CAPOT_BONUS;
     defenseCardPoints = 0;
     success = true;
   } else if (input.mode === "dedans") {
     attackCardPoints = 0;
-    defenseCardPoints = BELOTE_BASE_POINTS;
+    defenseCardPoints = total;
     success = false;
   } else {
-    const attack = Math.max(0, Math.min(BELOTE_BASE_POINTS, input.attackScore));
+    const attack = Math.max(0, Math.min(total, input.attackScore));
     attackCardPoints = attack;
-    defenseCardPoints = BELOTE_BASE_POINTS - attack;
-    success = attack >= BELOTE_SUCCESS_THRESHOLD;
+    defenseCardPoints = total - attack;
+    success = attack >= thresholdFor(contractType);
   }
 
   const teamPoints: Record<BeloteTeam, number> = {
@@ -85,6 +116,7 @@ export function computeBeloteRound(input: BeloteRoundInput): BeloteRoundResult {
     attackingTeam: input.attackingTeam,
     defendingTeam,
     mode: input.mode,
+    contractType,
     success,
     cardPoints: { attack: attackCardPoints, defense: defenseCardPoints },
     teamPoints: { A: teamPoints.A, B: teamPoints.B },

@@ -58,4 +58,47 @@ describe("Module C - Belote", () => {
     const totals = applyBeloteRound({}, ["preneur"], ["def1", "def2"], result);
     expect(totals).toEqual({ preneur: 90, def1: 72, def2: 72 });
   });
+
+  it("tout-atout: total 258, threshold 130, capot = 258 + 90", () => {
+    expect(isDedans(129, "tout-atout")).toBe(true);
+    expect(isDedans(130, "tout-atout")).toBe(false);
+
+    const result = computeBeloteRound({
+      attackingTeam: "A",
+      attackScore: 150,
+      mode: "normal",
+      contractType: "tout-atout",
+    });
+    expect(result.cardPoints).toEqual({ attack: 150, defense: 108 });
+    expect(result.success).toBe(true);
+
+    const capot = computeBeloteRound({
+      attackingTeam: "A",
+      attackScore: 0,
+      mode: "capot",
+      contractType: "tout-atout",
+    });
+    expect(capot.cardPoints).toEqual({ attack: 348, defense: 0 });
+  });
+
+  it("sans-atout: total 130, threshold 66, capot = 130 + 90", () => {
+    expect(isDedans(65, "sans-atout")).toBe(true);
+    expect(isDedans(66, "sans-atout")).toBe(false);
+
+    const result = computeBeloteRound({
+      attackingTeam: "A",
+      attackScore: 80,
+      mode: "normal",
+      contractType: "sans-atout",
+    });
+    expect(result.cardPoints).toEqual({ attack: 80, defense: 50 });
+
+    const capot = computeBeloteRound({
+      attackingTeam: "B",
+      attackScore: 0,
+      mode: "capot",
+      contractType: "sans-atout",
+    });
+    expect(capot.teamPoints).toEqual({ A: 0, B: 220 });
+  });
 });

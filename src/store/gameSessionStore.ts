@@ -40,6 +40,7 @@ export type RoundRecord =
       result: TarotRoundResult;
       preneurId: string;
       defenderIds: string[];
+      partnerId?: string | null;
     };
 
 export interface GameSession {
@@ -72,7 +73,8 @@ interface GameSessionState {
     sessionId: string,
     input: TarotRoundInput,
     preneurId: string,
-    defenderIds: string[]
+    defenderIds: string[],
+    partnerId?: string | null
   ) => void;
   undoLastRound: (sessionId: string) => void;
   toggleCastMode: (sessionId: string) => void;
@@ -94,7 +96,7 @@ function recomputeTotals(session: GameSession): Record<string, number> {
     } else if (round.module === "belote") {
       totals = applyBeloteRound(totals, round.attackTeamPlayerIds, round.defenseTeamPlayerIds, round.result);
     } else if (round.module === "tarot") {
-      totals = applyTarotRound(totals, round.preneurId, round.defenderIds, round.result);
+      totals = applyTarotRound(totals, round.preneurId, round.defenderIds, round.result, round.partnerId);
     }
   }
   return totals;
@@ -166,7 +168,7 @@ export const useGameSessionStore = create<GameSessionState>()(
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
       },
 
-      submitTarotRound: (sessionId, input, preneurId, defenderIds) => {
+      submitTarotRound: (sessionId, input, preneurId, defenderIds, partnerId) => {
         const session = get().sessions[sessionId];
         if (!session) return;
         const result = computeTarotRound(input);
@@ -177,6 +179,7 @@ export const useGameSessionStore = create<GameSessionState>()(
           result,
           preneurId,
           defenderIds,
+          partnerId: partnerId ?? null,
         };
         const nextRounds = [...session.rounds, round];
         const nextSession: GameSession = { ...session, rounds: nextRounds };

@@ -70,17 +70,35 @@ export function computeTarotRound(input: TarotRoundInput): TarotRoundResult {
  * Chaque défenseur gagne/perd `finalValue` (signe inversé par rapport au preneur).
  * Le preneur gagne/perd `finalValue * nombre de défenseurs`.
  * Généralise la règle "4 joueurs" (x3) à un nombre quelconque de défenseurs.
+ *
+ * À 5 joueurs, le preneur peut appeler un roi : `partnerId` désigne alors le
+ * joueur qui le détient (doit faire partie de `defenderIds`). Règle standard
+ * FFT : le preneur touche double, l'appelé touche simple, chaque défenseur
+ * restant perd simple (2 + 1 - 3 = 0, la donne reste équilibrée). Si le
+ * preneur s'appelle lui-même (garde seul, il a les 4 rois), `partnerId` doit
+ * être omis : on retombe sur la règle générale 1 contre N.
  */
 export function applyTarotRound(
   previousTotals: Record<string, number>,
   preneurId: string,
   defenderIds: string[],
-  result: TarotRoundResult
+  result: TarotRoundResult,
+  partnerId?: string | null
 ): Record<string, number> {
   const next: Record<string, number> = { ...previousTotals };
   const defenderDelta = -result.finalValue;
-  const preneurDelta = result.finalValue * defenderIds.length;
 
+  if (partnerId && partnerId !== preneurId) {
+    const actualDefenderIds = defenderIds.filter((id) => id !== partnerId);
+    next[preneurId] = (previousTotals[preneurId] ?? 0) + result.finalValue * 2;
+    next[partnerId] = (previousTotals[partnerId] ?? 0) + result.finalValue;
+    for (const id of actualDefenderIds) {
+      next[id] = (previousTotals[id] ?? 0) + defenderDelta;
+    }
+    return next;
+  }
+
+  const preneurDelta = result.finalValue * defenderIds.length;
   next[preneurId] = (previousTotals[preneurId] ?? 0) + preneurDelta;
   for (const id of defenderIds) {
     next[id] = (previousTotals[id] ?? 0) + defenderDelta;

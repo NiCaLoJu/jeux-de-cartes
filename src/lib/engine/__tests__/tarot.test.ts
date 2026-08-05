@@ -83,4 +83,34 @@ describe("Module D - Tarot", () => {
     const totals = applyTarotRound({}, "preneur", ["d1", "d2"], result);
     expect(totals).toEqual({ preneur: -204, d1: 102, d2: 102 });
   });
+
+  it("5 players with a called king: preneur x2, partner x1, each of the 3 remaining defenders -1", () => {
+    const result = computeTarotRound({
+      pointsPreneur: 50,
+      bouts: 3,
+      contract: "petite",
+      petitAuBout: false,
+      poignee: null,
+    }); // finalValue = 39
+    const totals = applyTarotRound(
+      {},
+      "preneur",
+      ["partner", "d1", "d2", "d3"],
+      result,
+      "partner"
+    );
+    expect(totals).toEqual({ preneur: 78, partner: 39, d1: -39, d2: -39, d3: -39 });
+  });
+
+  it("5 players, preneur calls his own king (garde seul): falls back to 1 vs 4", () => {
+    const result = computeTarotRound({
+      pointsPreneur: 50,
+      bouts: 3,
+      contract: "petite",
+      petitAuBout: false,
+      poignee: null,
+    }); // finalValue = 39
+    const totals = applyTarotRound({}, "preneur", ["d1", "d2", "d3", "d4"], result, null);
+    expect(totals).toEqual({ preneur: 156, d1: -39, d2: -39, d3: -39, d4: -39 });
+  });
 });
