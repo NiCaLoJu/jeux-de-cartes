@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { ClubGlyph } from "@/lib/clubGlyph";
+import { SpadeGlyph } from "@/lib/clubGlyph";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
@@ -17,7 +17,7 @@ export default function AppleIcon() {
           background: "linear-gradient(135deg, #a78bfa 0%, #ec4899 100%)",
         }}
       >
-        <ClubGlyph box={108} />
+        <SpadeGlyph box={108} />
       </div>
     ),
     { ...size }

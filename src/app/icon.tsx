@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { ClubGlyph } from "@/lib/clubGlyph";
+import { SpadeGlyph } from "@/lib/clubGlyph";
 
 export const size = { width: 512, height: 512 };
 export const contentType = "image/png";
@@ -18,7 +18,7 @@ export default function Icon() {
           borderRadius: 96,
         }}
       >
-        <ClubGlyph box={300} />
+        <SpadeGlyph box={300} />
       </div>
     ),
     { ...size }
