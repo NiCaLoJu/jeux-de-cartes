@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Each user owns their own games subcollection: users/{uid}/games/{gameId}
+    match /users/{userId}/games/{gameId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
