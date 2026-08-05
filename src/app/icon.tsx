@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { SpadeGlyph } from "@/lib/clubGlyph";
+import { FourSuitsGrid } from "@/lib/clubGlyph";
 
 export const size = { width: 512, height: 512 };
 export const contentType = "image/png";
@@ -18,7 +18,19 @@ export default function Icon() {
           borderRadius: 96,
         }}
       >
-        <SpadeGlyph box={300} />
+        <div
+          style={{
+            width: 380,
+            height: 380,
+            borderRadius: 56,
+            background: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <FourSuitsGrid cell={150} />
+        </div>
       </div>
     ),
     { ...size }
