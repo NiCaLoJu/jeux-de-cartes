@@ -23,6 +23,11 @@ jobs:
       - name: Write service account key
         run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/gcp-key.json"
 
+      - name: Enable Next.js web frameworks support
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
+        run: npx firebase-tools experiments:enable webframeworks
+
       - name: Deploy Firestore rules + Hosting
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
@@ -33,4 +38,4 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "jeux-de-cartes-a34f7.firebasestorage.app"
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "442638459103"
           NEXT_PUBLIC_FIREBASE_APP_ID: "1:442638459103:web:bca2fcf972dba188ca896a"
-        run: npx firebase-tools deploy --only firestore:rules,hosting --project jeux-de-cartes-a34f7 --non-interactive
+        run: npx firebase-tools deploy --only firestore:rules,hosting --project jeux-de-cartes-a34f7 --non-interactive --force
