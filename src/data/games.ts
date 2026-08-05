@@ -13,6 +13,8 @@ export interface GameDefinition {
   supportsTop?: boolean;
   /** "Divers" : direction du score (plus petit/plus grand gagne) choisie à la création de la partie. */
   supportsInvertedToggle?: boolean;
+  /** "Divers" : permet de renommer la partie (ex. "Rami", "Yams") à la création. */
+  supportsCustomName?: boolean;
 }
 
 export const GAME_LIBRARY: GameDefinition[] = [
@@ -47,6 +49,7 @@ export const GAME_LIBRARY: GameDefinition[] = [
     minPlayers: 2,
     maxPlayers: 10,
     supportsInvertedToggle: true,
+    supportsCustomName: true,
   },
   {
     id: "cinq-rois",

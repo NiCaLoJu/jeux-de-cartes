@@ -44,6 +44,7 @@ function NewGameContent() {
   const [newRosterName, setNewRosterName] = useState("");
   const [addingToRoster, setAddingToRoster] = useState(false);
   const [invertedScoring, setInvertedScoring] = useState(false);
+  const [customGameName, setCustomGameName] = useState("");
 
   const photoTargetRef = useRef<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -187,7 +188,8 @@ function NewGameContent() {
     const id = createGame(
       selectedGame,
       finalPlayers,
-      selectedGame.supportsInvertedToggle ? invertedScoring : undefined
+      selectedGame.supportsInvertedToggle ? invertedScoring : undefined,
+      selectedGame.supportsCustomName ? customGameName : undefined
     );
     router.push(`/game/${id}/play`);
   }
@@ -227,9 +229,29 @@ function NewGameContent() {
         </div>
       </section>
 
+      {selectedGame?.supportsCustomName && (
+        <section>
+          <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">2. Nom de la partie</h2>
+          <GlassCard className="!py-3">
+            <input
+              value={customGameName}
+              onChange={(e) => setCustomGameName(e.target.value)}
+              placeholder={selectedGame.name}
+              maxLength={40}
+              className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+            />
+            <p className="text-xs opacity-60 mt-2">
+              Ex. « Rami », « Yams »… laisse vide pour garder « {selectedGame.name} ».
+            </p>
+          </GlassCard>
+        </section>
+      )}
+
       {selectedGame?.supportsInvertedToggle && (
         <section>
-          <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">2. Sens du score</h2>
+          <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">
+            {selectedGame.supportsCustomName ? "3" : "2"}. Sens du score
+          </h2>
           <GlassCard className="flex flex-col gap-2 !py-3">
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -258,8 +280,8 @@ function NewGameContent() {
       {selectedGame && (
         <section>
           <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">
-            {selectedGame.supportsInvertedToggle ? "3" : "2"}. Joueurs ({selectedGame.minPlayers}–
-            {selectedGame.maxPlayers})
+            {1 + (selectedGame.supportsCustomName ? 1 : 0) + (selectedGame.supportsInvertedToggle ? 1 : 0) + 1}.
+            Joueurs ({selectedGame.minPlayers}–{selectedGame.maxPlayers})
           </h2>
 
           {(roster.length > 0 || addingToRoster) && (

@@ -78,7 +78,8 @@ interface GameSessionState {
   createGame: (
     game: GameDefinition,
     players: { id: string; name: string; teamId?: string }[],
-    invertedScoring?: boolean
+    invertedScoring?: boolean,
+    gameName?: string
   ) => string;
   submitCumulativeRound: (sessionId: string, points: Record<string, number>, top?: number) => void;
   submitBeloteRound: (
@@ -149,7 +150,7 @@ export const useGameSessionStore = create<GameSessionState>()(
     (set, get) => ({
       sessions: {},
 
-      createGame: (game, players, invertedScoring) => {
+      createGame: (game, players, invertedScoring, gameName) => {
         const id = makeId();
         const totals: Record<string, number> = {};
         const normalizedPlayers: Player[] = players.map((p) => ({
@@ -162,7 +163,7 @@ export const useGameSessionStore = create<GameSessionState>()(
         const session: GameSession = {
           id,
           gameId: game.id,
-          gameName: game.name,
+          gameName: gameName?.trim() || game.name,
           gameEmoji: game.emoji,
           gradient: game.gradient,
           module: game.module,
