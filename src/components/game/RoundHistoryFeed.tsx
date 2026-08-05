@@ -16,6 +16,7 @@ import { TarotRoundForm } from "@/components/game/TarotRoundForm";
 export function RoundHistoryFeed({
   rounds,
   players,
+  gameId,
   supportsTop,
   invertedScoring,
   onUndoLast,
@@ -25,6 +26,7 @@ export function RoundHistoryFeed({
 }: {
   rounds: RoundRecord[];
   players: Player[];
+  gameId?: string;
   supportsTop?: boolean;
   invertedScoring?: boolean;
   onUndoLast: () => void;
@@ -58,6 +60,7 @@ export function RoundHistoryFeed({
             key={round.roundNumber}
             round={round}
             players={players}
+            gameId={gameId}
             isLast={i === 0}
             supportsTop={supportsTop}
             invertedScoring={invertedScoring}
@@ -75,6 +78,7 @@ export function RoundHistoryFeed({
 function RoundRow({
   round,
   players,
+  gameId,
   isLast,
   supportsTop,
   invertedScoring,
@@ -85,6 +89,7 @@ function RoundRow({
 }: {
   round: RoundRecord;
   players: Player[];
+  gameId?: string;
   isLast: boolean;
   supportsTop?: boolean;
   invertedScoring?: boolean;
@@ -155,7 +160,7 @@ function RoundRow({
 
         {expanded && !editing && (
           <div className="pt-1">
-            <RoundDetail round={round} players={players} />
+            <RoundDetail round={round} players={players} gameId={gameId} />
             <button
               type="button"
               onClick={() => setEditing(true)}
@@ -169,6 +174,8 @@ function RoundRow({
         {expanded && editing && round.module === "cumulative" && (
           <CumulativeRoundForm
             players={players}
+            gameId={gameId}
+            roundNumber={round.roundNumber}
             supportsTop={supportsTop}
             invertedScoring={invertedScoring}
             initialPoints={round.points}
@@ -184,6 +191,8 @@ function RoundRow({
         {expanded && editing && round.module === "cumulative-inverted" && (
           <CumulativeRoundForm
             players={players}
+            gameId={gameId}
+            roundNumber={round.roundNumber}
             supportsTop={supportsTop}
             invertedScoring={invertedScoring}
             initialPoints={round.points}

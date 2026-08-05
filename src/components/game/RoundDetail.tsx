@@ -2,6 +2,7 @@
 
 import { Player } from "@/lib/engine";
 import { BELOTE_SUITS } from "@/lib/engine/belote";
+import { FIVE_ROIS_GAME_ID, jokerForRound } from "@/lib/fiveRoisJoker";
 import { RoundRecord } from "@/store/gameSessionStore";
 
 const TAROT_CONTRACT_LABELS: Record<string, string> = {
@@ -24,7 +25,15 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function RoundDetail({ round, players }: { round: RoundRecord; players: Player[] }) {
+export function RoundDetail({
+  round,
+  players,
+  gameId,
+}: {
+  round: RoundRecord;
+  players: Player[];
+  gameId?: string;
+}) {
   const dealer = round.dealerId ? nameOf(players, round.dealerId) : null;
 
   if (round.module === "belote") {
@@ -98,9 +107,11 @@ export function RoundDetail({ round, players }: { round: RoundRecord; players: P
   }
 
   // cumulative / cumulative-inverted
+  const joker = gameId === FIVE_ROIS_GAME_ID ? jokerForRound(round.roundNumber) : null;
   return (
     <div className="flex flex-col divide-y divide-black/5 dark:divide-white/10">
       {dealer && <Row label="Distribué par" value={dealer} />}
+      {joker && <Row label="Joker de la manche" value={`🃏 ${joker}`} />}
       {round.top !== undefined && <Row label="TOP" value={round.top} />}
       {players
         .filter((p) => round.points[p.id] !== undefined)

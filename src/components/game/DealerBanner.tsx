@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Player } from "@/lib/engine";
+import { useRosterStore } from "@/store/rosterStore";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 
 export function DealerBanner({
   players,
@@ -16,16 +18,19 @@ export function DealerBanner({
 }) {
   const [open, setOpen] = useState(false);
   const dealer = players.find((p) => p.id === dealerId);
+  const roster = useRosterStore((s) => s.roster);
+  const dealerPhoto = dealer ? roster.find((r) => r.id === dealer.id)?.photo : undefined;
 
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="glass-squircle p-5 sm:p-6 !py-2.5 w-full flex items-center justify-center gap-2 text-sm cursor-pointer"
+        className="glass-squircle p-5 sm:p-6 !py-2 w-full flex items-center justify-center gap-2 text-sm cursor-pointer"
       >
         <span className="text-lg">🃏</span>
         <span className="opacity-70">Distribue :</span>
+        {dealer && <PlayerAvatar name={dealer.name} photo={dealerPhoto} size={24} />}
         <span className="font-semibold">{dealer?.name ?? "—"}</span>
       </button>
 

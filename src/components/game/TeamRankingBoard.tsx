@@ -3,6 +3,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { RankedPlayer } from "@/lib/engine";
 import { groupTeams } from "@/lib/teamRanking";
+import { useRosterStore } from "@/store/rosterStore";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 
 const TEAM_GRADIENTS = [
   "from-[var(--pastel-mint)] to-[var(--pastel-sky)]",
@@ -19,6 +21,7 @@ export function TeamRankingBoard({
   // groupTeams() sorts by `rank`, which rankCumulative()/rankInverted() already
   // computed in the right direction upstream — no need to re-sort by raw total here.
   const teams = groupTeams(ranking);
+  const roster = useRosterStore((s) => s.roster);
 
   const isTie = teams.length > 1 && teams[0].total === teams[1].total;
 
@@ -51,6 +54,17 @@ export function TeamRankingBoard({
                     🔥 En tête
                   </motion.div>
                 )}
+                <div className="flex -space-x-3 mb-2">
+                  {team.players.map((p) => (
+                    <PlayerAvatar
+                      key={p.id}
+                      name={p.name}
+                      photo={roster.find((r) => r.id === p.id)?.photo}
+                      size={cast ? 56 : 40}
+                      className="ring-2 ring-white/80 dark:ring-black/40"
+                    />
+                  ))}
+                </div>
                 <span className={`font-semibold opacity-80 ${cast ? "text-xl" : "text-sm"}`}>
                   {team.players.map((p) => p.name).join(" & ")}
                 </span>

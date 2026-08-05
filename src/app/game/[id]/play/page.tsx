@@ -55,7 +55,8 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
         <button
           type="button"
           onClick={() => toggleCastMode(id)}
-          className="fixed top-4 right-4 w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 text-sm cursor-pointer z-30"
+          className="fixed right-4 w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 text-sm cursor-pointer z-30"
+          style={{ top: "max(1rem, env(safe-area-inset-top))" }}
           aria-label="Quitter le mode cast"
         >
           ✕
@@ -75,7 +76,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
   }
 
   return (
-    <div className="mx-auto max-w-2xl flex flex-col gap-6 pt-4 pb-16">
+    <div className="mx-auto max-w-2xl flex flex-col gap-6 pb-16">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-3xl">{session.gameEmoji}</span>
@@ -111,6 +112,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
       <RoundHistoryFeed
         rounds={session.rounds}
         players={session.players}
+        gameId={session.gameId}
         supportsTop={gameDef?.supportsTop}
         invertedScoring={invertedScoring}
         onUndoLast={() => undoLastRound(id)}
@@ -126,6 +128,8 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
       {(session.module === "cumulative" || session.module === "cumulative-inverted") && (
         <CumulativeRoundForm
           players={session.players}
+          gameId={session.gameId}
+          roundNumber={session.rounds.length + 1}
           supportsTop={gameDef?.supportsTop}
           invertedScoring={invertedScoring}
           onSubmit={(points, top) => submitCumulativeRound(id, points, top)}

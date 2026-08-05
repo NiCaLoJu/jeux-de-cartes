@@ -2,7 +2,9 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { RankedPlayer } from "@/lib/engine";
+import { useRosterStore } from "@/store/rosterStore";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 
 const MEDALS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
@@ -25,6 +27,7 @@ export function RankingBoard({
 }) {
   const maxTotal = Math.max(...ranking.map((p) => Math.abs(p.total)), 1);
   const leader = ranking[0];
+  const roster = useRosterStore((s) => s.roster);
 
   return (
     <div className="flex flex-col gap-3">
@@ -46,12 +49,19 @@ export function RankingBoard({
                   player.rank === 1 ? "ring-2 ring-gold/70" : ""
                 }`}
               >
-                <div
-                  className={`flex-shrink-0 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 font-bold ${
-                    cast ? "w-14 h-14 text-2xl" : "w-10 h-10 text-sm"
-                  }`}
-                >
-                  {MEDALS[player.rank] ?? `#${player.rank}`}
+                <div className="relative flex-shrink-0">
+                  <PlayerAvatar
+                    name={player.name}
+                    photo={roster.find((r) => r.id === player.id)?.photo}
+                    size={cast ? 56 : 40}
+                  />
+                  <div
+                    className={`absolute -bottom-1 -right-1 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 font-bold ring-2 ring-[var(--background)] ${
+                      cast ? "w-7 h-7 text-sm" : "w-5 h-5 text-[10px]"
+                    }`}
+                  >
+                    {MEDALS[player.rank] ?? `#${player.rank}`}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">

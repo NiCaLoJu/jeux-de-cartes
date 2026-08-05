@@ -3,7 +3,9 @@
 import { motion } from "framer-motion";
 import { RankedPlayer } from "@/lib/engine";
 import { groupTeams } from "@/lib/teamRanking";
+import { useRosterStore } from "@/store/rosterStore";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 
 const PODIUM_STYLE = {
   1: { height: "h-40", order: "order-2", color: "from-gold/60 to-amber-300/60", medal: "🥇" },
@@ -16,6 +18,7 @@ export function Podium({ ranking }: { ranking: RankedPlayer[] }) {
   const top3 = entries.filter((e) => e.rank <= 3).slice(0, 3);
   const others = entries.filter((e) => e.rank > 3);
   const lastRank = entries[entries.length - 1]?.rank;
+  const roster = useRosterStore((s) => s.roster);
 
   return (
     <div className="flex flex-col gap-8 items-center">
@@ -49,6 +52,17 @@ export function Podium({ ranking }: { ranking: RankedPlayer[] }) {
               transition={{ delay: entry.rank * 0.15, type: "spring", stiffness: 160, damping: 16 }}
             >
               <span className="text-3xl">{style.medal}</span>
+              <div className="flex -space-x-3">
+                {entry.players.map((p) => (
+                  <PlayerAvatar
+                    key={p.id}
+                    name={p.name}
+                    photo={roster.find((r) => r.id === p.id)?.photo}
+                    size={48}
+                    className="ring-2 ring-white/80 dark:ring-black/40"
+                  />
+                ))}
+              </div>
               <span className="font-semibold text-sm sm:text-base text-center truncate max-w-full px-1">
                 {entry.name}
               </span>
@@ -72,6 +86,17 @@ export function Podium({ ranking }: { ranking: RankedPlayer[] }) {
             <GlassCard key={entry.id} className="!py-3 flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <span className="opacity-60 text-sm">#{entry.rank}</span>
+                <div className="flex -space-x-2">
+                  {entry.players.map((p) => (
+                    <PlayerAvatar
+                      key={p.id}
+                      name={p.name}
+                      photo={roster.find((r) => r.id === p.id)?.photo}
+                      size={28}
+                      className="ring-2 ring-[var(--background)]"
+                    />
+                  ))}
+                </div>
                 <span className="font-medium">{entry.name}</span>
               </span>
               <span className="flex items-center gap-2 text-sm opacity-70">

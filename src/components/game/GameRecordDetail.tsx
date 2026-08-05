@@ -102,7 +102,7 @@ export function GameRecordDetail({ record, onClose }: { record: GameRecord; onCl
                     </button>
                     {isOpen && (
                       <div className="pt-2">
-                        <RoundDetail round={round} players={record.players} />
+                        <RoundDetail round={round} players={record.players} gameId={record.gameId} />
                       </div>
                     )}
                   </GlassCard>

@@ -69,6 +69,20 @@ body {
   overflow-x: hidden;
 }
 
+/* ---------- iOS safe-area (notch / dynamic island / home indicator) ---------- */
+
+.safe-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.safe-top-header {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
 /* ---------- Animated pastel background ---------- */
 
 .pastel-backdrop {

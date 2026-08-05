@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Player } from "@/lib/engine";
+import { FIVE_ROIS_GAME_ID, jokerForRound } from "@/lib/fiveRoisJoker";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlossyButton } from "@/components/ui/GlossyButton";
 
@@ -14,6 +15,8 @@ export function CumulativeRoundForm({
   initialTop,
   submitLabel = "✅ Valider le tour",
   onCancel,
+  gameId,
+  roundNumber,
 }: {
   players: Player[];
   supportsTop?: boolean;
@@ -23,6 +26,8 @@ export function CumulativeRoundForm({
   initialTop?: number;
   submitLabel?: string;
   onCancel?: () => void;
+  gameId?: string;
+  roundNumber?: number;
 }) {
   const [values, setValues] = useState<Record<string, string>>(() =>
     initialPoints
@@ -32,6 +37,7 @@ export function CumulativeRoundForm({
   const [top, setTop] = useState(initialTop !== undefined ? String(initialTop) : "");
 
   const allFilled = players.every((p) => (values[p.id] ?? "").trim() !== "");
+  const joker = gameId === FIVE_ROIS_GAME_ID && roundNumber ? jokerForRound(roundNumber) : null;
 
   function handleSubmit() {
     if (!allFilled) return;
@@ -49,6 +55,13 @@ export function CumulativeRoundForm({
       <h3 className="font-semibold text-sm opacity-70 uppercase tracking-wide">
         {invertedScoring ? "Points de pénalité de la manche" : "Points de la manche"}
       </h3>
+
+      {joker && (
+        <div className="rounded-2xl bg-gradient-to-r from-violet-400/20 to-fuchsia-400/20 px-4 py-2.5 text-sm flex items-center justify-center gap-2 font-medium">
+          🃏 Joker de la manche {roundNumber} :
+          <span className="text-lg font-bold">{joker}</span>
+        </div>
+      )}
 
       {supportsTop && (
         <div>
