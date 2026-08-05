@@ -59,18 +59,24 @@ describe("Module C - Belote", () => {
     expect(totals).toEqual({ preneur: 90, def1: 72, def2: 72 });
   });
 
-  it("tout-atout: total 258, threshold 130, capot = 258 + 90", () => {
-    expect(isDedans(129, "tout-atout")).toBe(true);
-    expect(isDedans(130, "tout-atout")).toBe(false);
-
+  it("tout-atout: score x4, success threshold stays 82/162 (unmultiplied)", () => {
     const result = computeBeloteRound({
       attackingTeam: "A",
-      attackScore: 150,
+      attackScore: 100,
       mode: "normal",
       contractType: "tout-atout",
     });
-    expect(result.cardPoints).toEqual({ attack: 150, defense: 108 });
+    // raw split 100/62 x4 = 400/248
+    expect(result.cardPoints).toEqual({ attack: 400, defense: 248 });
     expect(result.success).toBe(true);
+
+    const failed = computeBeloteRound({
+      attackingTeam: "A",
+      attackScore: 81,
+      mode: "normal",
+      contractType: "tout-atout",
+    });
+    expect(failed.success).toBe(false); // 81 < 82 threshold, independent of multiplier
 
     const capot = computeBeloteRound({
       attackingTeam: "A",
@@ -78,20 +84,18 @@ describe("Module C - Belote", () => {
       mode: "capot",
       contractType: "tout-atout",
     });
-    expect(capot.cardPoints).toEqual({ attack: 348, defense: 0 });
+    expect(capot.cardPoints).toEqual({ attack: 1008, defense: 0 }); // 252 x4
   });
 
-  it("sans-atout: total 130, threshold 66, capot = 130 + 90", () => {
-    expect(isDedans(65, "sans-atout")).toBe(true);
-    expect(isDedans(66, "sans-atout")).toBe(false);
-
+  it("sans-atout: score x2", () => {
     const result = computeBeloteRound({
       attackingTeam: "A",
-      attackScore: 80,
+      attackScore: 90,
       mode: "normal",
       contractType: "sans-atout",
     });
-    expect(result.cardPoints).toEqual({ attack: 80, defense: 50 });
+    // raw split 90/72 x2 = 180/144
+    expect(result.cardPoints).toEqual({ attack: 180, defense: 144 });
 
     const capot = computeBeloteRound({
       attackingTeam: "B",
@@ -99,6 +103,14 @@ describe("Module C - Belote", () => {
       mode: "capot",
       contractType: "sans-atout",
     });
-    expect(capot.teamPoints).toEqual({ A: 0, B: 220 });
+    expect(capot.teamPoints).toEqual({ A: 0, B: 504 }); // 252 x2
+
+    const dedans = computeBeloteRound({
+      attackingTeam: "A",
+      attackScore: 40,
+      mode: "dedans",
+      contractType: "sans-atout",
+    });
+    expect(dedans.teamPoints).toEqual({ A: 0, B: 324 }); // 162 x2
   });
 });

@@ -3,14 +3,16 @@
 import { useMemo, useState } from "react";
 import { Player } from "@/lib/engine";
 import {
+  BELOTE_BASE_POINTS,
+  BELOTE_CONTRACT_MULTIPLIER,
   BELOTE_SEQUENCE_ANNONCES,
   BELOTE_SUITS,
-  BELOTE_TOTAL_POINTS,
   BeloteContractType,
   BeloteMode,
   BeloteRoundInput,
   BeloteSuit,
   BeloteTeam,
+  computeBeloteRound,
   isDedans,
 } from "@/lib/engine/belote";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -59,34 +61,36 @@ export function BeloteRoundForm({
     ? (attackSide === "A" ? teamB : teamA).map((p) => p.id)
     : players.filter((p) => p.id !== preneurId).map((p) => p.id);
 
-  const totalPoints = BELOTE_TOTAL_POINTS[contractType];
+  const multiplier = BELOTE_CONTRACT_MULTIPLIER[contractType];
   const attackScoreNumber = Number(attackScore || 0);
-  const suggestDedans = mode === "normal" && isDedans(attackScoreNumber, contractType);
+  const suggestDedans = mode === "normal" && isDedans(attackScoreNumber);
   const liveDefenseScore = useMemo(() => {
     if (mode === "capot") return 0;
-    if (mode === "dedans") return totalPoints;
-    return totalPoints - Math.max(0, Math.min(totalPoints, attackScoreNumber));
-  }, [mode, attackScoreNumber, totalPoints]);
+    if (mode === "dedans") return BELOTE_BASE_POINTS;
+    return BELOTE_BASE_POINTS - Math.max(0, Math.min(BELOTE_BASE_POINTS, attackScoreNumber));
+  }, [mode, attackScoreNumber]);
 
   function addAnnonce(side: "attack" | "defense", value: number) {
     if (side === "attack") setAnnonceAttack((prev) => String(Number(prev || 0) + value));
     else setAnnonceDefense((prev) => String(Number(prev || 0) + value));
   }
 
+  const previewInput: BeloteRoundInput = {
+    attackingTeam: "A",
+    attackScore: attackScoreNumber,
+    mode,
+    contractType,
+    trumpSuit,
+    annonces: [
+      ...(annonceAttack ? [{ team: "A" as const, value: Number(annonceAttack) }] : []),
+      ...(annonceDefense ? [{ team: "B" as const, value: Number(annonceDefense) }] : []),
+    ],
+    beloteTeam: beloteSide === "none" ? null : beloteSide === "attack" ? "A" : "B",
+  };
+  const preview = computeBeloteRound(previewInput);
+
   function handleSubmit() {
-    const input: BeloteRoundInput = {
-      attackingTeam: "A",
-      attackScore: attackScoreNumber,
-      mode,
-      contractType,
-      trumpSuit,
-      annonces: [
-        ...(annonceAttack ? [{ team: "A" as const, value: Number(annonceAttack) }] : []),
-        ...(annonceDefense ? [{ team: "B" as const, value: Number(annonceDefense) }] : []),
-      ],
-      beloteTeam: beloteSide === "none" ? null : beloteSide === "attack" ? "A" : "B",
-    };
-    onSubmit(input, attackTeamPlayerIds, defenseTeamPlayerIds);
+    onSubmit(previewInput, attackTeamPlayerIds, defenseTeamPlayerIds);
     setAttackScore("100");
     setAnnonceAttack("");
     setAnnonceDefense("");
@@ -147,12 +151,12 @@ export function BeloteRoundForm({
         <div className="grid grid-cols-2 gap-2">
           <ModeButton
             active={trumpChoice === "tout-atout"}
-            label="Tout Atout"
+            label="Tout Atout (x4)"
             onClick={() => setTrumpChoice("tout-atout")}
           />
           <ModeButton
             active={trumpChoice === "sans-atout"}
-            label="Sans Atout"
+            label="Sans Atout (x2)"
             onClick={() => setTrumpChoice("sans-atout")}
           />
         </div>
@@ -170,7 +174,7 @@ export function BeloteRoundForm({
       {mode === "normal" && (
         <div>
           <label className="text-xs opacity-60 block mb-1">
-            Score de l&apos;attaque <span className="opacity-50">(/ {totalPoints})</span>
+            Score de l&apos;attaque <span className="opacity-50">(/ {BELOTE_BASE_POINTS})</span>
           </label>
           <input
             type="number"
@@ -250,6 +254,16 @@ export function BeloteRoundForm({
           <ModeButton active={beloteSide === "attack"} label="Attaque" onClick={() => setBeloteSide("attack")} />
           <ModeButton active={beloteSide === "defense"} label="Défense" onClick={() => setBeloteSide("defense")} />
         </div>
+      </div>
+
+      <div className="rounded-2xl bg-black/5 dark:bg-white/5 px-4 py-3 text-sm flex items-center justify-between">
+        <span className="opacity-70">
+          {multiplier > 1 ? `Score x${multiplier} · ` : ""}
+          {preview.success ? "Attaque réussie ✅" : "Attaque chutée ❌"}
+        </span>
+        <span className="font-bold text-lg tabular-nums">
+          {preview.teamPoints.A} - {preview.teamPoints.B}
+        </span>
       </div>
 
       <GlossyButton size="lg" onClick={handleSubmit} className="w-full">

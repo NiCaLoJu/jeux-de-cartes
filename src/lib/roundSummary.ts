@@ -38,9 +38,9 @@ export function summarizeRound(round: RoundRecord, players: Player[]): RoundSumm
     const suit = result.trumpSuit ? BELOTE_SUITS.find((s) => s.id === result.trumpSuit) : null;
     const trumpLabel =
       result.contractType === "tout-atout"
-        ? "Tout Atout"
+        ? "Tout Atout (x4)"
         : result.contractType === "sans-atout"
-          ? "Sans Atout"
+          ? "Sans Atout (x2)"
           : (suit ? `${suit.symbol} ${suit.label}` : "Atout");
     const modeLabel = result.mode === "capot" ? " · Capot" : result.mode === "dedans" ? " · Dedans" : "";
     return {

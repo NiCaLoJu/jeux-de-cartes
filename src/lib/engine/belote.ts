@@ -7,13 +7,10 @@ export const BELOTE_BASE_POINTS = 162;
 export const BELOTE_SUCCESS_THRESHOLD = 82;
 export const BELOTE_CAPOT_POINTS = 252;
 export const BELOTE_BONUS = 20;
-/** Bonus "dix de der" + marge intégré au capot, appliqué quel que soit le contrat (162 -> 252). */
-export const BELOTE_CAPOT_BONUS = BELOTE_CAPOT_POINTS - BELOTE_BASE_POINTS;
 
 export type BeloteTeam = "A" | "B";
 export type BeloteMode = "normal" | "dedans" | "capot";
-/** "normal" = un atout choisi. "tout-atout" : toutes les couleurs valent atout (total 258).
- * "sans-atout" : aucune couleur ne vaut atout (total 130). */
+/** "normal" = un atout choisi (x1). "sans-atout" : score x2. "tout-atout" : score x4. */
 export type BeloteContractType = "normal" | "tout-atout" | "sans-atout";
 /** Couleur d'atout choisie, uniquement pertinent quand contractType === "normal". */
 export type BeloteSuit = "trefle" | "carreau" | "coeur" | "pique";
@@ -25,10 +22,11 @@ export const BELOTE_SUITS: { id: BeloteSuit; label: string; symbol: string; colo
   { id: "pique", label: "Pique", symbol: "♠", color: "black" },
 ];
 
-export const BELOTE_TOTAL_POINTS: Record<BeloteContractType, number> = {
-  normal: BELOTE_BASE_POINTS,
-  "tout-atout": 258,
-  "sans-atout": 130,
+/** Multiplicateur appliqué aux points de plis (et au capot) selon le contrat. */
+export const BELOTE_CONTRACT_MULTIPLIER: Record<BeloteContractType, number> = {
+  normal: 1,
+  "sans-atout": 2,
+  "tout-atout": 4,
 };
 
 /** Annonces de suite standard (indépendantes de la belote/rebelote). */
@@ -70,17 +68,9 @@ export interface BeloteRoundResult {
   teamPoints: { A: number; B: number };
 }
 
-function totalPointsFor(contractType: BeloteContractType): number {
-  return BELOTE_TOTAL_POINTS[contractType];
-}
-
-function thresholdFor(contractType: BeloteContractType): number {
-  return Math.floor(totalPointsFor(contractType) / 2) + 1;
-}
-
 /** true si le score saisi entraînerait une chute (utile pour proposer le bouton "Dedans" côté UI). */
-export function isDedans(attackScore: number, contractType: BeloteContractType = "normal"): boolean {
-  return attackScore < thresholdFor(contractType);
+export function isDedans(attackScore: number): boolean {
+  return attackScore < BELOTE_SUCCESS_THRESHOLD;
 }
 
 function otherTeam(team: BeloteTeam): BeloteTeam {
@@ -89,7 +79,7 @@ function otherTeam(team: BeloteTeam): BeloteTeam {
 
 export function computeBeloteRound(input: BeloteRoundInput): BeloteRoundResult {
   const contractType = input.contractType ?? "normal";
-  const total = totalPointsFor(contractType);
+  const multiplier = BELOTE_CONTRACT_MULTIPLIER[contractType];
   const defendingTeam = otherTeam(input.attackingTeam);
 
   let attackCardPoints: number;
@@ -97,18 +87,18 @@ export function computeBeloteRound(input: BeloteRoundInput): BeloteRoundResult {
   let success: boolean;
 
   if (input.mode === "capot") {
-    attackCardPoints = total + BELOTE_CAPOT_BONUS;
+    attackCardPoints = BELOTE_CAPOT_POINTS * multiplier;
     defenseCardPoints = 0;
     success = true;
   } else if (input.mode === "dedans") {
     attackCardPoints = 0;
-    defenseCardPoints = total;
+    defenseCardPoints = BELOTE_BASE_POINTS * multiplier;
     success = false;
   } else {
-    const attack = Math.max(0, Math.min(total, input.attackScore));
-    attackCardPoints = attack;
-    defenseCardPoints = total - attack;
-    success = attack >= thresholdFor(contractType);
+    const attack = Math.max(0, Math.min(BELOTE_BASE_POINTS, input.attackScore));
+    attackCardPoints = attack * multiplier;
+    defenseCardPoints = (BELOTE_BASE_POINTS - attack) * multiplier;
+    success = attack >= BELOTE_SUCCESS_THRESHOLD;
   }
 
   const teamPoints: Record<BeloteTeam, number> = {
