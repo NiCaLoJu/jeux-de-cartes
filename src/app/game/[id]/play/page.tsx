@@ -14,6 +14,7 @@ import { BeloteRoundForm } from "@/components/game/BeloteRoundForm";
 import { TarotRoundForm } from "@/components/game/TarotRoundForm";
 import { GameOverCelebration } from "@/components/game/GameOverCelebration";
 import { GlossyButton } from "@/components/ui/GlossyButton";
+import { FIVE_ROIS_GAME_ID } from "@/lib/fiveRoisJoker";
 
 export default function PlayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -44,6 +45,15 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
   const ranking = getRanking(session);
   const invertedScoring = session.invertedScoring ?? session.module === "cumulative-inverted";
   const isTeamGame = session.players.some((p) => p.teamId);
+  const dealerBannerAboveForm = session.gameId === FIVE_ROIS_GAME_ID;
+
+  const dealerBanner = (
+    <DealerBanner
+      players={session.players}
+      dealerId={session.dealerId}
+      onChangeDealer={(playerId) => setDealer(id, playerId)}
+    />
+  );
 
   if (session.status === "finished") {
     return <GameOverCelebration session={session} ranking={ranking} />;
@@ -95,11 +105,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
 
-      <DealerBanner
-        players={session.players}
-        dealerId={session.dealerId}
-        onChangeDealer={(playerId) => setDealer(id, playerId)}
-      />
+      {!dealerBannerAboveForm && dealerBanner}
 
       <DeltaBanner ranking={ranking} />
 
@@ -126,14 +132,17 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
       />
 
       {(session.module === "cumulative" || session.module === "cumulative-inverted") && (
-        <CumulativeRoundForm
-          players={session.players}
-          gameId={session.gameId}
-          roundNumber={session.rounds.length + 1}
-          supportsTop={gameDef?.supportsTop}
-          invertedScoring={invertedScoring}
-          onSubmit={(points, top) => submitCumulativeRound(id, points, top)}
-        />
+        <>
+          {dealerBannerAboveForm && dealerBanner}
+          <CumulativeRoundForm
+            players={session.players}
+            gameId={session.gameId}
+            roundNumber={session.rounds.length + 1}
+            supportsTop={gameDef?.supportsTop}
+            invertedScoring={invertedScoring}
+            onSubmit={(points, top) => submitCumulativeRound(id, points, top)}
+          />
+        </>
       )}
 
       {session.module === "belote" && (
