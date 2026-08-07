@@ -14,7 +14,12 @@ export const metadata: Metadata = {
   description: "Le tableau de score des soirées jeux — glossy, animé, prêt pour le cast TV.",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    // "black-translucent" makes the status bar transparent so the page draws
+    // edge-to-edge under it — required for env(safe-area-inset-top) to be
+    // honored at all in standalone mode. With "default", iOS was leaving the
+    // status bar/Dynamic Island area opaque over our own content instead of
+    // reserving space for it, cutting the page off right below it.
+    statusBarStyle: "black-translucent",
     title: "Score Board",
   },
 };
@@ -23,7 +28,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#d9c9f7",
+  themeColor: "#f5f5f7",
   viewportFit: "cover",
 };
 

@@ -16,15 +16,16 @@ export function GameLibraryCarousel() {
         >
           <Link
             href={`/game/new?game=${game.id}`}
-            className={`group relative flex-shrink-0 w-40 sm:w-48 h-52 sm:h-56 rounded-[28px] p-5 flex flex-col justify-between overflow-hidden bg-gradient-to-br ${game.gradient} shadow-lg shadow-black/10 transition-transform hover:scale-[1.03] active:scale-[0.98]`}
+            className="group glass-squircle flex-shrink-0 w-40 sm:w-44 p-4 flex flex-col gap-4 transition-transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]" />
-            <div className="relative text-5xl drop-shadow-sm">{game.emoji}</div>
-            <div className="relative">
-              <div className="font-bold text-lg text-white text-shadow-soft leading-tight">
-                {game.name}
-              </div>
-              <div className="text-xs text-white/85 mt-1">{game.tagline}</div>
+            <div
+              className={`w-11 h-11 rounded-full flex items-center justify-center text-2xl bg-gradient-to-br ${game.gradient}`}
+            >
+              {game.emoji}
+            </div>
+            <div>
+              <div className="font-semibold text-sm leading-tight">{game.name}</div>
+              <div className="text-xs opacity-55 mt-1">{game.tagline}</div>
             </div>
           </Link>
         </motion.div>
