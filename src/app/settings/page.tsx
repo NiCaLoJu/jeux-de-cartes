@@ -33,7 +33,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl flex flex-col gap-6 pt-4 pb-16">
+    <div className="mx-auto max-w-2xl flex flex-col gap-6 px-4 sm:px-6 pt-4 pb-16 safe-top">
       <div className="flex items-center gap-3">
         <Link
           href="/dashboard"

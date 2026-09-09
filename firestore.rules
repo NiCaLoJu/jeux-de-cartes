@@ -11,5 +11,14 @@ service cloud.firestore {
     match /users/{userId}/roster/{playerId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Public, read-only, no-account-needed game recap links: /share/[id].
+    // Anyone can read a share once its id is known; only a signed-in user
+    // can publish one, and shares are immutable once created.
+    match /public_shares/{shareId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
   }
 }

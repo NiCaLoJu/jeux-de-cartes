@@ -4,13 +4,42 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GameRecord } from "@/lib/history";
 import { summarizeRound } from "@/lib/roundSummary";
+import { shareRecapImage, shareRecapLink } from "@/lib/shareImage";
 import { RoundDetail } from "@/components/game/RoundDetail";
 import { ScoreChart } from "@/components/game/ScoreChart";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 export function GameRecordDetail({ record, onClose }: { record: GameRecord; onClose: () => void }) {
   const [expandedRound, setExpandedRound] = useState<number | null>(null);
+  const [shareState, setShareState] = useState<"idle" | "busy" | "copied" | "error">("idle");
   const sortedPlayers = [...record.players].sort((a, b) => a.rank - b.rank);
+
+  async function handleShareImage() {
+    setShareState("busy");
+    try {
+      await shareRecapImage(record);
+      setShareState("idle");
+    } catch {
+      setShareState("error");
+      setTimeout(() => setShareState("idle"), 2000);
+    }
+  }
+
+  async function handleShareLink() {
+    setShareState("busy");
+    try {
+      const result = await shareRecapLink(record);
+      if (result === "copied") {
+        setShareState("copied");
+        setTimeout(() => setShareState("idle"), 2000);
+      } else {
+        setShareState("idle");
+      }
+    } catch {
+      setShareState("error");
+      setTimeout(() => setShareState("idle"), 2000);
+    }
+  }
 
   return (
     <motion.div
@@ -42,15 +71,44 @@ export function GameRecordDetail({ record, onClose }: { record: GameRecord; onCl
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 text-sm cursor-pointer flex-shrink-0"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleShareImage}
+              disabled={shareState === "busy"}
+              aria-label="Partager l'image récap"
+              title="Partager l'image récap"
+              className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 text-sm cursor-pointer disabled:opacity-40"
+            >
+              🖼️
+            </button>
+            <button
+              type="button"
+              onClick={handleShareLink}
+              disabled={shareState === "busy"}
+              aria-label="Partager le lien"
+              title="Partager le lien"
+              className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 text-sm cursor-pointer disabled:opacity-40"
+            >
+              🔗
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fermer"
+              className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 text-sm cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
         </div>
+
+        {shareState === "copied" && (
+          <div className="mb-3 text-center text-xs font-medium text-[var(--accent)]">🔗 Lien copié !</div>
+        )}
+        {shareState === "error" && (
+          <div className="mb-3 text-center text-xs font-medium text-rose-500">Le partage a échoué, réessaie.</div>
+        )}
 
         <div className="flex flex-col gap-2 mb-5">
           {sortedPlayers.map((p) => (
