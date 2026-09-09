@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GameRecord } from "@/lib/history";
 import { summarizeRound } from "@/lib/roundSummary";
 import { RoundDetail } from "@/components/game/RoundDetail";
+import { ScoreChart } from "@/components/game/ScoreChart";
 import { GlassCard } from "@/components/ui/GlassCard";
 
 export function GameRecordDetail({ record, onClose }: { record: GameRecord; onClose: () => void }) {
@@ -69,6 +70,13 @@ export function GameRecordDetail({ record, onClose }: { record: GameRecord; onCl
             </div>
           ))}
         </div>
+
+        {record.rounds && record.rounds.length > 1 && (
+          <GlassCard className="mb-4 !py-3">
+            <h3 className="text-xs font-semibold opacity-60 uppercase tracking-wide mb-2">Évolution du score</h3>
+            <ScoreChart players={record.players} rounds={record.rounds} />
+          </GlassCard>
+        )}
 
         {record.rounds && record.rounds.length > 0 ? (
           <div className="flex flex-col gap-2">

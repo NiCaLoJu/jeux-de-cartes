@@ -8,7 +8,9 @@ import { RankingBoard } from "@/components/game/RankingBoard";
 import { TeamRankingBoard } from "@/components/game/TeamRankingBoard";
 import { DealerBanner } from "@/components/game/DealerBanner";
 import { RoundHistoryFeed } from "@/components/game/RoundHistoryFeed";
+import { ScoreChart } from "@/components/game/ScoreChart";
 import { DeltaBanner } from "@/components/game/DeltaBanner";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { CumulativeRoundForm } from "@/components/game/CumulativeRoundForm";
 import { BeloteRoundForm } from "@/components/game/BeloteRoundForm";
 import { TarotRoundForm } from "@/components/game/TarotRoundForm";
@@ -113,6 +115,13 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
         <TeamRankingBoard ranking={ranking} />
       ) : (
         <RankingBoard ranking={ranking} invertedScoring={invertedScoring} />
+      )}
+
+      {session.rounds.length > 1 && (
+        <GlassCard className="!py-3">
+          <h3 className="text-xs font-semibold opacity-60 uppercase tracking-wide mb-2">Évolution du score</h3>
+          <ScoreChart players={session.players} rounds={session.rounds} />
+        </GlassCard>
       )}
 
       <RoundHistoryFeed
