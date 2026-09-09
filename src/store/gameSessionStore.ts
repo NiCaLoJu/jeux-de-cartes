@@ -64,6 +64,8 @@ export interface GameSession {
   dealerId: string;
   /** true = le score le plus bas gagne. Par défaut dérivé du module, mais réglable pour "Divers". */
   invertedScoring: boolean;
+  /** "Divers" : fin de partie optionnelle, fixée à la création. */
+  endCondition?: { type: "score"; value: number } | { type: "rounds"; value: number };
 }
 
 function nextPlayerId(players: Player[], currentId: string): string {
@@ -79,7 +81,8 @@ interface GameSessionState {
     game: GameDefinition,
     players: { id: string; name: string; teamId?: string }[],
     invertedScoring?: boolean,
-    gameName?: string
+    gameName?: string,
+    endCondition?: GameSession["endCondition"]
   ) => string;
   submitCumulativeRound: (sessionId: string, points: Record<string, number>, top?: number) => void;
   submitBeloteRound: (
@@ -150,7 +153,7 @@ export const useGameSessionStore = create<GameSessionState>()(
     (set, get) => ({
       sessions: {},
 
-      createGame: (game, players, invertedScoring, gameName) => {
+      createGame: (game, players, invertedScoring, gameName, endCondition) => {
         const id = makeId();
         const totals: Record<string, number> = {};
         const normalizedPlayers: Player[] = players.map((p) => ({
@@ -175,6 +178,7 @@ export const useGameSessionStore = create<GameSessionState>()(
           createdAt: new Date().toISOString(),
           dealerId: normalizedPlayers[0]?.id ?? "",
           invertedScoring: invertedScoring ?? game.module === "cumulative-inverted",
+          endCondition,
         };
         set((state) => ({ sessions: { ...state.sessions, [id]: session } }));
         return id;
@@ -348,6 +352,19 @@ export const useGameSessionStore = create<GameSessionState>()(
     { name: "sbp_active_sessions" }
   )
 );
+
+/** True once the session's optional "Divers" end condition (score cible / nombre de manches) is met. */
+export function endConditionReached(session: GameSession): boolean {
+  const condition = session.endCondition;
+  if (!condition) return false;
+  if (condition.type === "rounds") return session.rounds.length >= condition.value;
+
+  const inverted = session.invertedScoring ?? session.module === "cumulative-inverted";
+  return session.players.some((p) => {
+    const total = session.totals[p.id] ?? 0;
+    return inverted ? total <= condition.value : total >= condition.value;
+  });
+}
 
 export function getRanking(session: GameSession): RankedPlayer[] {
   // Older persisted sessions predate `invertedScoring`; fall back to the module default.

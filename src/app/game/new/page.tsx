@@ -45,6 +45,8 @@ function NewGameContent() {
   const [addingToRoster, setAddingToRoster] = useState(false);
   const [invertedScoring, setInvertedScoring] = useState(false);
   const [customGameName, setCustomGameName] = useState("");
+  const [endConditionType, setEndConditionType] = useState<"none" | "score" | "rounds">("none");
+  const [endConditionValue, setEndConditionValue] = useState("");
 
   const photoTargetRef = useRef<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -185,14 +187,27 @@ function NewGameContent() {
       }
     }
 
+    const endConditionNumeric = Number(endConditionValue);
+    const endCondition =
+      selectedGame.supportsEndCondition && endConditionType !== "none" && endConditionNumeric > 0
+        ? { type: endConditionType, value: endConditionNumeric }
+        : undefined;
+
     const id = createGame(
       selectedGame,
       finalPlayers,
       selectedGame.supportsInvertedToggle ? invertedScoring : undefined,
-      selectedGame.supportsCustomName ? customGameName : undefined
+      selectedGame.supportsCustomName ? customGameName : undefined,
+      endCondition
     );
     router.push(`/game/${id}/play`);
   }
+
+  let stepCounter = 1;
+  const nameStepNum = selectedGame?.supportsCustomName ? ++stepCounter : null;
+  const invertedStepNum = selectedGame?.supportsInvertedToggle ? ++stepCounter : null;
+  const endConditionStepNum = selectedGame?.supportsEndCondition ? ++stepCounter : null;
+  const playersStepNum = selectedGame ? ++stepCounter : null;
 
   return (
     <div className="mx-auto max-w-2xl flex flex-col gap-8 pb-16">
@@ -231,7 +246,9 @@ function NewGameContent() {
 
       {selectedGame?.supportsCustomName && (
         <section>
-          <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">2. Nom de la partie</h2>
+          <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">
+            {nameStepNum}. Nom de la partie
+          </h2>
           <GlassCard className="!py-3">
             <input
               value={customGameName}
@@ -250,7 +267,7 @@ function NewGameContent() {
       {selectedGame?.supportsInvertedToggle && (
         <section>
           <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">
-            {selectedGame.supportsCustomName ? "3" : "2"}. Sens du score
+            {invertedStepNum}. Sens du score
           </h2>
           <GlassCard className="flex flex-col gap-2 !py-3">
             <div className="grid grid-cols-2 gap-2">
@@ -277,11 +294,50 @@ function NewGameContent() {
         </section>
       )}
 
+      {selectedGame?.supportsEndCondition && (
+        <section>
+          <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">
+            {endConditionStepNum}. Fin de partie
+          </h2>
+          <GlassCard className="flex flex-col gap-2 !py-3">
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  ["none", "♾️ Illimitée"],
+                  ["score", "🎯 Score cible"],
+                  ["rounds", "🔢 Nb. manches"],
+                ] as const
+              ).map(([type, label]) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setEndConditionType(type)}
+                  className={`rounded-xl px-2 py-2.5 text-xs font-medium cursor-pointer transition-colors ${
+                    endConditionType === type ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {endConditionType !== "none" && (
+              <input
+                type="number"
+                inputMode="numeric"
+                value={endConditionValue}
+                onChange={(e) => setEndConditionValue(e.target.value)}
+                placeholder={endConditionType === "score" ? "Ex. 500" : "Ex. 10"}
+                className="mt-1 w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-2.5 outline-none focus:ring-2 focus:ring-violet-400"
+              />
+            )}
+          </GlassCard>
+        </section>
+      )}
+
       {selectedGame && (
         <section>
           <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">
-            {1 + (selectedGame.supportsCustomName ? 1 : 0) + (selectedGame.supportsInvertedToggle ? 1 : 0) + 1}.
-            Joueurs ({selectedGame.minPlayers}–{selectedGame.maxPlayers})
+            {playersStepNum}. Joueurs ({selectedGame.minPlayers}–{selectedGame.maxPlayers})
           </h2>
 
           {(roster.length > 0 || addingToRoster) && (

@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
-import { useGameSessionStore, getRanking } from "@/store/gameSessionStore";
+import { useGameSessionStore, getRanking, endConditionReached } from "@/store/gameSessionStore";
 import { getGameById } from "@/data/games";
 import { RankingBoard } from "@/components/game/RankingBoard";
 import { TeamRankingBoard } from "@/components/game/TeamRankingBoard";
@@ -48,6 +48,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
   const invertedScoring = session.invertedScoring ?? session.module === "cumulative-inverted";
   const isTeamGame = session.players.some((p) => p.teamId);
   const dealerBannerAboveForm = session.gameId === FIVE_ROIS_GAME_ID;
+  const endReached = endConditionReached(session);
 
   const dealerBanner = (
     <DealerBanner
@@ -108,6 +109,17 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {!dealerBannerAboveForm && dealerBanner}
+
+      {endReached && (
+        <GlassCard className="!py-3 flex items-center justify-between gap-3 bg-amber-100/70 dark:bg-amber-400/10">
+          <div className="text-sm font-medium">
+            🏁 Fin de partie atteinte !
+          </div>
+          <GlossyButton size="sm" variant="danger" onClick={() => finishGame(id)}>
+            Terminer
+          </GlossyButton>
+        </GlassCard>
+      )}
 
       <DeltaBanner ranking={ranking} />
 
