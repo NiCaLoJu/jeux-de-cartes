@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useRosterStore } from "@/store/rosterStore";
+import { initAppearance } from "@/lib/appearance";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const init = useAuthStore((s) => s.init);
@@ -12,6 +13,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     init();
   }, [init]);
+
+  useEffect(() => {
+    initAppearance();
+  }, []);
 
   useEffect(() => {
     if (user) loadRoster(user.uid);

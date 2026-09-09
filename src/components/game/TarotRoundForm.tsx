@@ -100,7 +100,7 @@ export function TarotRoundForm({
                 setPartnerId(null);
               }}
               className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-                preneurId === p.id ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                preneurId === p.id ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
               }`}
             >
               {p.name}
@@ -117,7 +117,7 @@ export function TarotRoundForm({
               type="button"
               onClick={() => setPartnerId(null)}
               className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-                partnerId === null ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                partnerId === null ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
               }`}
             >
               Garde seul (son roi)
@@ -128,7 +128,7 @@ export function TarotRoundForm({
                 type="button"
                 onClick={() => setPartnerId(p.id)}
                 className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-                  partnerId === p.id ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                  partnerId === p.id ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
                 }`}
               >
                 {p.name}
@@ -151,7 +151,7 @@ export function TarotRoundForm({
             inputMode="numeric"
             value={points}
             onChange={(e) => setPoints(e.target.value)}
-            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
           />
         </div>
         <div>
@@ -163,7 +163,7 @@ export function TarotRoundForm({
                 type="button"
                 onClick={() => setBouts(b)}
                 className={`rounded-xl py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-                  bouts === b ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                  bouts === b ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
                 }`}
               >
                 {b}
@@ -182,7 +182,7 @@ export function TarotRoundForm({
               type="button"
               onClick={() => setContract(c.id)}
               className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-                contract === c.id ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                contract === c.id ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
               }`}
             >
               {c.label}
@@ -197,7 +197,7 @@ export function TarotRoundForm({
             type="checkbox"
             checked={petitAuBout}
             onChange={(e) => setPetitAuBout(e.target.checked)}
-            className="w-5 h-5 accent-violet-500"
+            className="w-5 h-5 accent-[var(--accent)]"
           />
           Petit au bout (+10)
         </label>
@@ -206,7 +206,7 @@ export function TarotRoundForm({
           <select
             value={poignee ?? ""}
             onChange={(e) => setPoignee((e.target.value || null) as TarotPoignee)}
-            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-3 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-3 py-3 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
           >
             {POIGNEES.map((p) => (
               <option key={p.label} value={p.id ?? ""}>

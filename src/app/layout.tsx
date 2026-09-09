@@ -32,9 +32,25 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const THEME_INIT_SCRIPT = `try {
+  var m = localStorage.getItem("sbp_theme");
+  if (m === "light" || m === "dark") document.documentElement.setAttribute("data-theme", m);
+  var a = localStorage.getItem("sbp_accent");
+  var presets = { blue: ["#3b82f6","#60a5fa","#2563eb"], emerald: ["#10b981","#34d399","#059669"], orange: ["#f97316","#fb923c","#ea580c"], rose: ["#f43f5e","#fb7185","#e11d48"], graphite: ["#4b5563","#9ca3af","#1f2937"] };
+  if (a && presets[a]) {
+    var s = document.documentElement.style;
+    s.setProperty("--accent", presets[a][0]);
+    s.setProperty("--accent-soft", presets[a][1]);
+    s.setProperty("--accent-strong", presets[a][2]);
+  }
+} catch (e) {}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <PastelBackground />
         <AppProviders>{children}</AppProviders>

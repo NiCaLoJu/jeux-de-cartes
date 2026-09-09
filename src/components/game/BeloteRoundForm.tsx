@@ -171,7 +171,7 @@ export function BeloteRoundForm({
               onClick={() => setTrumpChoice(s.id)}
               className={`rounded-xl py-2.5 text-lg font-semibold cursor-pointer transition-colors flex items-center justify-center gap-1 ${
                 trumpChoice === s.id
-                  ? "bg-violet-500 text-white"
+                  ? "bg-[var(--accent)] text-white"
                   : `bg-black/5 dark:bg-white/10 ${s.color === "red" ? "text-rose-500" : ""}`
               }`}
               aria-label={s.label}
@@ -213,7 +213,7 @@ export function BeloteRoundForm({
             inputMode="numeric"
             value={attackScore}
             onChange={(e) => setAttackScore(e.target.value)}
-            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
           />
           <div className="flex items-center justify-between mt-2 text-xs">
             <span className="opacity-60">Défense (auto) : {liveDefenseScore}</span>
@@ -251,7 +251,7 @@ export function BeloteRoundForm({
             value={annonceAttack}
             onChange={(e) => setAnnonceAttack(e.target.value)}
             placeholder="0"
-            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-3 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-3 py-3 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
           />
         </div>
         <div>
@@ -274,7 +274,7 @@ export function BeloteRoundForm({
             value={annonceDefense}
             onChange={(e) => setAnnonceDefense(e.target.value)}
             placeholder="0"
-            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-3 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-3 py-3 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
           />
         </div>
       </div>
@@ -318,7 +318,7 @@ function TeamButton({ active, label, onClick }: { active: boolean; label: string
       type="button"
       onClick={onClick}
       className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-        active ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+        active ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
       }`}
     >
       {label}
@@ -332,7 +332,7 @@ function ModeButton({ active, label, onClick }: { active: boolean; label: string
       type="button"
       onClick={onClick}
       className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-        active ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+        active ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
       }`}
     >
       {label}

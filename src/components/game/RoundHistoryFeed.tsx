@@ -118,7 +118,7 @@ function RoundWinsPanel({
               name={p.name}
               photo={roster.find((r) => r.id === p.id)?.photo}
               size={40}
-              className={selectedId === p.id ? "ring-4 ring-violet-400" : "opacity-80"}
+              className={selectedId === p.id ? "ring-4 ring-[var(--accent-soft)]" : "opacity-80"}
             />
             <span className="text-xs max-w-[4rem] truncate">{p.name}</span>
           </button>
@@ -235,7 +235,7 @@ function RoundRow({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="mt-2 text-xs font-medium text-violet-500 cursor-pointer"
+              className="mt-2 text-xs font-medium text-[var(--accent)] cursor-pointer"
             >
               ✏️ Modifier cette manche
             </button>

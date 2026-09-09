@@ -13,18 +13,27 @@ export function AppHeader() {
           <span className="text-lg">🏆</span>
           <span className="hidden sm:inline">Score Board</span>
         </Link>
-        <button
-          type="button"
-          onClick={() => signOutUser()}
-          className="flex items-center gap-1.5 text-[11px] opacity-30 hover:opacity-70 transition-opacity cursor-pointer py-1"
-          aria-label={user?.displayName ? `Déconnexion (${user.displayName})` : "Déconnexion"}
-        >
-          {user?.photoURL && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.photoURL} alt="" className="w-4 h-4 rounded-full object-cover" />
-          )}
-          Déconnexion
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/settings"
+            aria-label="Réglages"
+            className="text-[15px] opacity-30 hover:opacity-70 transition-opacity"
+          >
+            ⚙️
+          </Link>
+          <button
+            type="button"
+            onClick={() => signOutUser()}
+            className="flex items-center gap-1.5 text-[11px] opacity-30 hover:opacity-70 transition-opacity cursor-pointer py-1"
+            aria-label={user?.displayName ? `Déconnexion (${user.displayName})` : "Déconnexion"}
+          >
+            {user?.photoURL && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.photoURL} alt="" className="w-4 h-4 rounded-full object-cover" />
+            )}
+            Déconnexion
+          </button>
+        </div>
       </div>
     </header>
   );

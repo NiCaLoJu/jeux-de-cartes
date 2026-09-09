@@ -20,6 +20,11 @@
   --bronze: #d99866;
 
   --radius-squircle: 20px;
+
+  /* Accent — user-customizable in Réglages, defaults to the original violet. */
+  --accent: #8b5cf6;
+  --accent-soft: #a78bfa;
+  --accent-strong: #7c3aed;
 }
 
 :root[data-theme="dark"] {

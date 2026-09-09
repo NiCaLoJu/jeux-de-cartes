@@ -2,7 +2,7 @@ import { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 const VARIANTS = {
-  primary: "bg-gradient-to-b from-violet-400 to-violet-600 text-white",
+  primary: "bg-gradient-to-b from-[var(--accent-soft)] to-[var(--accent-strong)] text-white",
   mint: "bg-gradient-to-b from-emerald-300 to-emerald-500 text-emerald-950",
   peach: "bg-gradient-to-b from-orange-300 to-orange-500 text-orange-950",
   sky: "bg-gradient-to-b from-sky-300 to-sky-500 text-sky-950",

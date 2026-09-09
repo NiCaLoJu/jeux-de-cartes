@@ -53,7 +53,7 @@ export function DealerBanner({
                     setOpen(false);
                   }}
                   className={`rounded-xl px-3 py-2 text-sm font-medium cursor-pointer transition-colors ${
-                    p.id === dealerId ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                    p.id === dealerId ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
                   }`}
                 >
                   {p.name}

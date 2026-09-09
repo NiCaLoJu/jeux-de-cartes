@@ -11,6 +11,7 @@ import { useGameSessionStore } from "@/store/gameSessionStore";
 import { useRosterStore } from "@/store/rosterStore";
 import { useAuthStore } from "@/store/authStore";
 import { resizeImageFile } from "@/lib/imageResize";
+import { LastGroupPlayer, getLastGroup, saveLastGroup } from "@/lib/lastGroup";
 
 function makePlayerId() {
   return `p_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -47,6 +48,12 @@ function NewGameContent() {
   const [customGameName, setCustomGameName] = useState("");
   const [endConditionType, setEndConditionType] = useState<"none" | "score" | "rounds">("none");
   const [endConditionValue, setEndConditionValue] = useState("");
+  const [lastGroup, setLastGroup] = useState<LastGroupPlayer[] | null>(null);
+  const [lastGroupForGameId, setLastGroupForGameId] = useState<string | null>(null);
+  if ((selectedGame?.id ?? null) !== lastGroupForGameId) {
+    setLastGroupForGameId(selectedGame?.id ?? null);
+    setLastGroup(selectedGame ? getLastGroup(selectedGame.id) : null);
+  }
 
   const photoTargetRef = useRef<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -155,6 +162,11 @@ function NewGameContent() {
     setAddingToRoster(false);
   }
 
+  function resumeLastGroup() {
+    if (!lastGroup) return;
+    setPlayers(lastGroup.map((p) => ({ id: p.id, name: p.name, photo: p.photo })));
+  }
+
   function selectSuggestion(draftId: string, suggestion: { id: string; name: string; photo?: string }) {
     setPlayers((prev) => {
       if (prev.some((p) => p.id === suggestion.id && p.id !== draftId)) return prev;
@@ -192,6 +204,11 @@ function NewGameContent() {
       selectedGame.supportsEndCondition && endConditionType !== "none" && endConditionNumeric > 0
         ? { type: endConditionType, value: endConditionNumeric }
         : undefined;
+
+    saveLastGroup(
+      selectedGame.id,
+      validNames.map((p) => ({ id: p.id, name: p.name.trim(), photo: p.photo }))
+    );
 
     const id = createGame(
       selectedGame,
@@ -255,7 +272,7 @@ function NewGameContent() {
               onChange={(e) => setCustomGameName(e.target.value)}
               placeholder={selectedGame.name}
               maxLength={40}
-              className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+              className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
             />
             <p className="text-xs opacity-60 mt-2">
               Ex. « Rami », « Yams »… laisse vide pour garder « {selectedGame.name} ».
@@ -275,7 +292,7 @@ function NewGameContent() {
                 type="button"
                 onClick={() => setInvertedScoring(false)}
                 className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-                  !invertedScoring ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                  !invertedScoring ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
                 }`}
               >
                 🔼 Le plus de points gagne
@@ -284,7 +301,7 @@ function NewGameContent() {
                 type="button"
                 onClick={() => setInvertedScoring(true)}
                 className={`rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-                  invertedScoring ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                  invertedScoring ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
                 }`}
               >
                 🔽 Le moins de points gagne
@@ -313,7 +330,7 @@ function NewGameContent() {
                   type="button"
                   onClick={() => setEndConditionType(type)}
                   className={`rounded-xl px-2 py-2.5 text-xs font-medium cursor-pointer transition-colors ${
-                    endConditionType === type ? "bg-violet-500 text-white" : "bg-black/5 dark:bg-white/10"
+                    endConditionType === type ? "bg-[var(--accent)] text-white" : "bg-black/5 dark:bg-white/10"
                   }`}
                 >
                   {label}
@@ -327,7 +344,7 @@ function NewGameContent() {
                 value={endConditionValue}
                 onChange={(e) => setEndConditionValue(e.target.value)}
                 placeholder={endConditionType === "score" ? "Ex. 500" : "Ex. 10"}
-                className="mt-1 w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-2.5 outline-none focus:ring-2 focus:ring-violet-400"
+                className="mt-1 w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-2.5 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
               />
             )}
           </GlassCard>
@@ -339,6 +356,16 @@ function NewGameContent() {
           <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">
             {playersStepNum}. Joueurs ({selectedGame.minPlayers}–{selectedGame.maxPlayers})
           </h2>
+
+          {lastGroup && lastGroup.length > 0 && validNames.length === 0 && (
+            <button
+              type="button"
+              onClick={resumeLastGroup}
+              className="mb-3 w-full rounded-2xl px-4 py-2.5 text-sm font-medium bg-[var(--accent)]/10 text-[var(--accent)] cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              🔁 Reprendre : {lastGroup.map((p) => p.name).join(", ")}
+            </button>
+          )}
 
           {(roster.length > 0 || addingToRoster) && (
             <div className="flex gap-3 overflow-x-auto pb-2 mb-3 px-1">
@@ -355,7 +382,7 @@ function NewGameContent() {
                       name={r.name}
                       photo={r.photo}
                       size={56}
-                      className={selected ? "ring-4 ring-violet-400" : "opacity-70"}
+                      className={selected ? "ring-4 ring-[var(--accent-soft)]" : "opacity-70"}
                     />
                     <span className="text-xs max-w-[4rem] truncate">{r.name}</span>
                   </button>
@@ -405,7 +432,7 @@ function NewGameContent() {
                 value={newRosterName}
                 onChange={(e) => setNewRosterName(e.target.value)}
                 placeholder="Prénom"
-                className="flex-1 rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-2.5 outline-none focus:ring-2 focus:ring-violet-400"
+                className="flex-1 rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-2.5 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
               />
               <GlossyButton size="sm" onClick={confirmAddToRoster} disabled={!newRosterName.trim()}>
                 Ajouter
@@ -454,7 +481,7 @@ function NewGameContent() {
                     onBlur={() => setTimeout(() => setActiveSuggestId(null), 150)}
                     placeholder={`Joueur ${idx + 1}`}
                     autoComplete="off"
-                    className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+                    className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
                   />
                   {activeSuggestId === player.id &&
                     player.name.trim().length > 0 &&
@@ -531,7 +558,7 @@ function NewGameContent() {
                 <button
                   type="button"
                   onClick={shuffleTeams}
-                  className="self-center text-xs font-medium text-violet-500 cursor-pointer flex items-center gap-1"
+                  className="self-center text-xs font-medium text-[var(--accent)] cursor-pointer flex items-center gap-1"
                 >
                   🔀 Mélanger les équipes
                 </button>

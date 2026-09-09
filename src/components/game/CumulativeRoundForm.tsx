@@ -57,7 +57,7 @@ export function CumulativeRoundForm({
       </h3>
 
       {joker && (
-        <div className="rounded-2xl bg-gradient-to-r from-violet-400/20 to-fuchsia-400/20 px-4 py-2.5 text-sm flex items-center justify-center gap-2 font-medium">
+        <div className="rounded-2xl bg-gradient-to-r from-[var(--accent-soft)]/20 to-fuchsia-400/20 px-4 py-2.5 text-sm flex items-center justify-center gap-2 font-medium">
           🃏 Joker de la manche {roundNumber} :
           <span className="text-lg font-bold">{joker}</span>
         </div>
@@ -71,7 +71,7 @@ export function CumulativeRoundForm({
             inputMode="numeric"
             value={top}
             onChange={(e) => setTop(e.target.value)}
-            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400"
+            className="w-full rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
             placeholder="ex : 68"
           />
         </div>
@@ -86,7 +86,7 @@ export function CumulativeRoundForm({
               inputMode="numeric"
               value={values[player.id] ?? ""}
               onChange={(e) => setValues((v) => ({ ...v, [player.id]: e.target.value }))}
-              className="w-24 rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-3 py-3 text-right outline-none focus:ring-2 focus:ring-violet-400"
+              className="w-24 rounded-xl border border-white/50 dark:border-white/10 bg-white/50 dark:bg-white/5 px-3 py-3 text-right outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
               placeholder="0"
             />
           </div>
