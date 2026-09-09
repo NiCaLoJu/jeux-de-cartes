@@ -3,3 +3,4 @@ export * from "./cumulative";
 export * from "./cumulativeInverted";
 export * from "./belote";
 export * from "./tarot";
+export * from "./coinche";

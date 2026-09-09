@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BeloteRoundInput } from "@/lib/engine/belote";
 import { TarotRoundInput } from "@/lib/engine/tarot";
+import { CoincheRoundInput } from "@/lib/engine/coinche";
 import { Player } from "@/lib/engine";
+import { getGameById } from "@/data/games";
 import { summarizeRound } from "@/lib/roundSummary";
 import { roundWinnerIds } from "@/lib/roundWinner";
 import { RoundRecord } from "@/store/gameSessionStore";
@@ -15,6 +17,7 @@ import { RoundDetail } from "@/components/game/RoundDetail";
 import { CumulativeRoundForm } from "@/components/game/CumulativeRoundForm";
 import { BeloteRoundForm } from "@/components/game/BeloteRoundForm";
 import { TarotRoundForm } from "@/components/game/TarotRoundForm";
+import { CoincheRoundForm } from "@/components/game/CoincheRoundForm";
 
 export function RoundHistoryFeed({
   rounds,
@@ -26,6 +29,7 @@ export function RoundHistoryFeed({
   onEditCumulative,
   onEditBelote,
   onEditTarot,
+  onEditCoinche,
 }: {
   rounds: RoundRecord[];
   players: Player[];
@@ -47,10 +51,17 @@ export function RoundHistoryFeed({
     defenderIds: string[],
     partnerId?: string | null
   ) => void;
+  onEditCoinche: (
+    roundNumber: number,
+    input: CoincheRoundInput,
+    attackTeamPlayerIds: string[],
+    defenseTeamPlayerIds: string[]
+  ) => void;
 }) {
   if (rounds.length === 0) return null;
 
   const reversed = [...rounds].reverse();
+  const supportsCoincheLevel = gameId ? getGameById(gameId)?.supportsCoincheLevel : undefined;
 
   return (
     <div className="flex flex-col gap-2">
@@ -68,10 +79,12 @@ export function RoundHistoryFeed({
             isLast={i === 0}
             supportsTop={supportsTop}
             invertedScoring={invertedScoring}
+            supportsCoincheLevel={supportsCoincheLevel}
             onUndoLast={onUndoLast}
             onEditCumulative={onEditCumulative}
             onEditBelote={onEditBelote}
             onEditTarot={onEditTarot}
+            onEditCoinche={onEditCoinche}
           />
         ))}
       </AnimatePresence>
@@ -153,10 +166,12 @@ function RoundRow({
   isLast,
   supportsTop,
   invertedScoring,
+  supportsCoincheLevel,
   onUndoLast,
   onEditCumulative,
   onEditBelote,
   onEditTarot,
+  onEditCoinche,
 }: {
   round: RoundRecord;
   players: Player[];
@@ -164,6 +179,7 @@ function RoundRow({
   isLast: boolean;
   supportsTop?: boolean;
   invertedScoring?: boolean;
+  supportsCoincheLevel?: boolean;
   onUndoLast: () => void;
   onEditCumulative: (roundNumber: number, points: Record<string, number>, top?: number) => void;
   onEditBelote: (
@@ -178,6 +194,12 @@ function RoundRow({
     preneurId: string,
     defenderIds: string[],
     partnerId?: string | null
+  ) => void;
+  onEditCoinche: (
+    roundNumber: number,
+    input: CoincheRoundInput,
+    attackTeamPlayerIds: string[],
+    defenseTeamPlayerIds: string[]
   ) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -296,6 +318,19 @@ function RoundRow({
             onCancel={() => setEditing(false)}
             onSubmit={(input, preneurId, defenderIds, partnerId) => {
               onEditTarot(round.roundNumber, input, preneurId, defenderIds, partnerId);
+              setEditing(false);
+            }}
+          />
+        )}
+        {expanded && editing && round.module === "coinche" && (
+          <CoincheRoundForm
+            players={players}
+            supportsCoincheLevel={supportsCoincheLevel}
+            initial={{ input: round.input, attackTeamPlayerIds: round.attackTeamPlayerIds }}
+            submitLabel="💾 Enregistrer"
+            onCancel={() => setEditing(false)}
+            onSubmit={(input, attack, defense) => {
+              onEditCoinche(round.roundNumber, input, attack, defense);
               setEditing(false);
             }}
           />

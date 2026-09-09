@@ -1,6 +1,6 @@
 // Core types shared by every scoring engine module.
 
-export type GameModule = "cumulative" | "cumulative-inverted" | "belote" | "tarot";
+export type GameModule = "cumulative" | "cumulative-inverted" | "belote" | "tarot" | "coinche";
 
 export interface Player {
   id: string;

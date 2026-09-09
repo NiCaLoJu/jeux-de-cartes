@@ -69,7 +69,8 @@ function NewGameContent() {
     if (g) setSelectedGame(g);
   }
 
-  const needsTeams = selectedGame?.module === "belote" && players.length === 4;
+  const needsTeams =
+    (selectedGame?.module === "belote" || selectedGame?.module === "coinche") && players.length === 4;
 
   const validNames = players.filter((p) => p.name.trim().length > 0);
   const canStart = useMemo(() => {

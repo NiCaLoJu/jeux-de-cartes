@@ -144,16 +144,16 @@ export interface DuoStats {
 }
 
 /**
- * Win rate of teammate pairs in team games (currently Belote 4p). Teammates
- * aren't stored directly on GameRecordPlayer, but two players sharing the
- * exact same total+rank in a 4-player Belote game were necessarily on the
- * same team that game.
+ * Win rate of teammate pairs in team games (Belote/Coinche/Contrée, 4p).
+ * Teammates aren't stored directly on GameRecordPlayer, but two players
+ * sharing the exact same total+rank in a 4-player game were necessarily on
+ * the same team that game.
  */
 export function computeDuoStats(records: GameRecord[]): DuoStats[] {
   const map = new Map<string, { names: [string, string]; games: number; wins: number }>();
 
   for (const record of records) {
-    if (record.module !== "belote" || record.players.length !== 4) continue;
+    if ((record.module !== "belote" && record.module !== "coinche") || record.players.length !== 4) continue;
     const buckets = new Map<string, GameRecordPlayer[]>();
     for (const p of record.players) {
       const key = `${p.total}_${p.rank}`;

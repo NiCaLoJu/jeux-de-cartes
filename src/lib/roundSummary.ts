@@ -56,6 +56,29 @@ export function summarizeRound(
     };
   }
 
+  if (round.module === "coinche") {
+    const { result } = round;
+    const attackNames = namesOf(players, round.attackTeamPlayerIds);
+    const defenseNames = namesOf(players, round.defenseTeamPlayerIds);
+    const suit = result.trumpSuit ? BELOTE_SUITS.find((s) => s.id === result.trumpSuit) : null;
+    const trumpLabel =
+      result.contractType === "tout-atout"
+        ? "Tout Atout"
+        : result.contractType === "sans-atout"
+          ? "Sans Atout"
+          : (suit ? `${suit.symbol} ${suit.label}` : "Atout");
+    const levelLabel =
+      result.coincheLevel === "surcoinche" ? " · Surcoinché" : result.coincheLevel === "coinche" ? " · Coinché" : "";
+    const modeLabel = result.mode === "capot" ? " · Capot" : "";
+    const bidLabel = result.mode === "capot" ? "Capot" : `${result.bidValue}`;
+    return {
+      title: `${attackNames} vs ${defenseNames}`,
+      subtitle: `${bidLabel} · ${trumpLabel}${modeLabel}${levelLabel}${dealerSuffix}`,
+      badge: `${result.teamPoints[result.attackingTeam]} - ${result.teamPoints[result.defendingTeam]}`,
+      positive: result.success,
+    };
+  }
+
   if (round.module === "tarot") {
     const { result } = round;
     const preneur = nameOf(players, round.preneurId);

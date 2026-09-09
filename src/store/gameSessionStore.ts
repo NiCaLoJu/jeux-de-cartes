@@ -3,15 +3,19 @@ import { persist } from "zustand/middleware";
 import {
   BeloteRoundInput,
   BeloteRoundResult,
+  CoincheRoundInput,
+  CoincheRoundResult,
   GameModule,
   Player,
   RankedPlayer,
   TarotRoundInput,
   TarotRoundResult,
   applyBeloteRound,
+  applyCoincheRound,
   applyCumulativeRound,
   applyTarotRound,
   computeBeloteRound,
+  computeCoincheRound,
   computeTarotRound,
   rankCumulative,
   rankInverted,
@@ -43,6 +47,15 @@ export type RoundRecord =
       preneurId: string;
       defenderIds: string[];
       partnerId?: string | null;
+      dealerId?: string;
+    }
+  | {
+      module: "coinche";
+      roundNumber: number;
+      input: CoincheRoundInput;
+      result: CoincheRoundResult;
+      attackTeamPlayerIds: string[];
+      defenseTeamPlayerIds: string[];
       dealerId?: string;
     };
 
@@ -98,6 +111,12 @@ interface GameSessionState {
     defenderIds: string[],
     partnerId?: string | null
   ) => void;
+  submitCoincheRound: (
+    sessionId: string,
+    input: CoincheRoundInput,
+    attackTeamPlayerIds: string[],
+    defenseTeamPlayerIds: string[]
+  ) => void;
   undoLastRound: (sessionId: string) => void;
   editCumulativeRound: (sessionId: string, roundNumber: number, points: Record<string, number>, top?: number) => void;
   editBeloteRound: (
@@ -114,6 +133,13 @@ interface GameSessionState {
     preneurId: string,
     defenderIds: string[],
     partnerId?: string | null
+  ) => void;
+  editCoincheRound: (
+    sessionId: string,
+    roundNumber: number,
+    input: CoincheRoundInput,
+    attackTeamPlayerIds: string[],
+    defenseTeamPlayerIds: string[]
   ) => void;
   setDealer: (sessionId: string, playerId: string) => void;
   toggleCastMode: (sessionId: string) => void;
@@ -143,6 +169,8 @@ function recomputeTotals(session: GameSession): Record<string, number> {
       totals = applyBeloteRound(totals, round.attackTeamPlayerIds, round.defenseTeamPlayerIds, round.result);
     } else if (round.module === "tarot") {
       totals = applyTarotRound(totals, round.preneurId, round.defenderIds, round.result, round.partnerId);
+    } else if (round.module === "coinche") {
+      totals = applyCoincheRound(totals, round.attackTeamPlayerIds, round.defenseTeamPlayerIds, round.result);
     }
   }
   return totals;
@@ -251,6 +279,29 @@ export const useGameSessionStore = create<GameSessionState>()(
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
       },
 
+      submitCoincheRound: (sessionId, input, attackTeamPlayerIds, defenseTeamPlayerIds) => {
+        const session = get().sessions[sessionId];
+        if (!session) return;
+        const result = computeCoincheRound(input);
+        const round: RoundRecord = {
+          module: "coinche",
+          roundNumber: session.rounds.length + 1,
+          input,
+          result,
+          attackTeamPlayerIds,
+          defenseTeamPlayerIds,
+          dealerId: session.dealerId,
+        };
+        const nextRounds = [...session.rounds, round];
+        const nextSession: GameSession = {
+          ...session,
+          rounds: nextRounds,
+          dealerId: nextPlayerId(session.players, session.dealerId),
+        };
+        nextSession.totals = recomputeTotals(nextSession);
+        set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
+      },
+
       undoLastRound: (sessionId) => {
         const session = get().sessions[sessionId];
         if (!session || session.rounds.length === 0) return;
@@ -269,7 +320,8 @@ export const useGameSessionStore = create<GameSessionState>()(
         const session = get().sessions[sessionId];
         if (!session) return;
         const existing = session.rounds.find((r) => r.roundNumber === roundNumber);
-        if (!existing || existing.module === "belote" || existing.module === "tarot") return;
+        if (!existing || existing.module === "belote" || existing.module === "tarot" || existing.module === "coinche")
+          return;
         const nextSession = replaceRound(session, roundNumber, { ...existing, points, top });
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
       },
@@ -303,6 +355,22 @@ export const useGameSessionStore = create<GameSessionState>()(
           preneurId,
           defenderIds,
           partnerId: partnerId ?? null,
+        });
+        set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
+      },
+
+      editCoincheRound: (sessionId, roundNumber, input, attackTeamPlayerIds, defenseTeamPlayerIds) => {
+        const session = get().sessions[sessionId];
+        if (!session) return;
+        const existing = session.rounds.find((r) => r.roundNumber === roundNumber);
+        if (!existing || existing.module !== "coinche") return;
+        const result = computeCoincheRound(input);
+        const nextSession = replaceRound(session, roundNumber, {
+          ...existing,
+          input,
+          result,
+          attackTeamPlayerIds,
+          defenseTeamPlayerIds,
         });
         set((state) => ({ sessions: { ...state.sessions, [sessionId]: nextSession } }));
       },

@@ -77,6 +77,51 @@ export function RoundDetail({
     );
   }
 
+  if (round.module === "coinche") {
+    const { input, result } = round;
+    const suit = result.trumpSuit ? BELOTE_SUITS.find((s) => s.id === result.trumpSuit) : null;
+    const trumpLabel =
+      result.contractType === "tout-atout"
+        ? "Tout Atout (x4)"
+        : result.contractType === "sans-atout"
+          ? "Sans Atout (x2)"
+          : suit
+            ? `${suit.symbol} ${suit.label}`
+            : "Atout";
+    const levelLabel =
+      result.coincheLevel === "surcoinche" ? "Surcoinché (x4)" : result.coincheLevel === "coinche" ? "Coinché (x2)" : null;
+    const modeLabel = result.mode === "capot" ? "Capot" : result.mode === "dedans" ? "Dedans" : "Normal";
+    const attackNames = round.attackTeamPlayerIds.map((id) => nameOf(players, id)).join(" & ");
+    const defenseNames = round.defenseTeamPlayerIds.map((id) => nameOf(players, id)).join(" & ");
+    const beloteWinner =
+      input.beloteTeam === "A" ? attackNames : input.beloteTeam === "B" ? defenseNames : null;
+    const attackAnnonces = (input.annonces ?? []).filter((a) => a.team === "A").reduce((s, a) => s + a.value, 0);
+    const defenseAnnonces = (input.annonces ?? []).filter((a) => a.team === "B").reduce((s, a) => s + a.value, 0);
+
+    return (
+      <div className="flex flex-col divide-y divide-black/5 dark:divide-white/10">
+        {dealer && <Row label="Distribué par" value={dealer} />}
+        <Row label="Attaque" value={attackNames} />
+        <Row label="Défense" value={defenseNames} />
+        <Row label="Annonce" value={result.mode === "capot" ? "Capot" : result.bidValue} />
+        <Row label="Contrat" value={trumpLabel} />
+        {levelLabel && <Row label="Coinche" value={levelLabel} />}
+        <Row label="Résultat" value={modeLabel} />
+        {result.mode === "normal" && (
+          <Row label="Points de plis (avant multiplicateur)" value={`${input.attackScore} / 162`} />
+        )}
+        <Row label="Points de plis (attaque / défense)" value={`${result.cardPoints.attack} / ${result.cardPoints.defense}`} />
+        {attackAnnonces > 0 && <Row label="Annonces attaque" value={`+${attackAnnonces}`} />}
+        {defenseAnnonces > 0 && <Row label="Annonces défense" value={`+${defenseAnnonces}`} />}
+        {beloteWinner && <Row label="Belote / Rebelote" value={`${beloteWinner} (+20)`} />}
+        <Row
+          label="Total de la donne"
+          value={`${attackNames} ${result.teamPoints[result.attackingTeam]} - ${result.teamPoints[result.defendingTeam]} ${defenseNames}`}
+        />
+      </div>
+    );
+  }
+
   if (round.module === "tarot") {
     const { input, result } = round;
     const preneur = nameOf(players, round.preneurId);

@@ -13,7 +13,7 @@ export function roundWinnerIds(round: RoundRecord, invertedScoring: boolean): st
     return entries.filter(([, v]) => v === best).map(([id]) => id);
   }
 
-  if (round.module === "belote") {
+  if (round.module === "belote" || round.module === "coinche") {
     const { result } = round;
     const attackPoints = result.teamPoints[result.attackingTeam];
     const defensePoints = result.teamPoints[result.defendingTeam];

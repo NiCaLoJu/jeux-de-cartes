@@ -14,6 +14,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { CumulativeRoundForm } from "@/components/game/CumulativeRoundForm";
 import { BeloteRoundForm } from "@/components/game/BeloteRoundForm";
 import { TarotRoundForm } from "@/components/game/TarotRoundForm";
+import { CoincheRoundForm } from "@/components/game/CoincheRoundForm";
 import { GameOverCelebration } from "@/components/game/GameOverCelebration";
 import { GlossyButton } from "@/components/ui/GlossyButton";
 import { FIVE_ROIS_GAME_ID } from "@/lib/fiveRoisJoker";
@@ -26,9 +27,11 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
   const submitCumulativeRound = useGameSessionStore((s) => s.submitCumulativeRound);
   const submitBeloteRound = useGameSessionStore((s) => s.submitBeloteRound);
   const submitTarotRound = useGameSessionStore((s) => s.submitTarotRound);
+  const submitCoincheRound = useGameSessionStore((s) => s.submitCoincheRound);
   const editCumulativeRound = useGameSessionStore((s) => s.editCumulativeRound);
   const editBeloteRound = useGameSessionStore((s) => s.editBeloteRound);
   const editTarotRound = useGameSessionStore((s) => s.editTarotRound);
+  const editCoincheRound = useGameSessionStore((s) => s.editCoincheRound);
   const undoLastRound = useGameSessionStore((s) => s.undoLastRound);
   const setDealer = useGameSessionStore((s) => s.setDealer);
   const toggleCastMode = useGameSessionStore((s) => s.toggleCastMode);
@@ -150,6 +153,9 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
         onEditTarot={(roundNumber, input, preneurId, defenderIds, partnerId) =>
           editTarotRound(id, roundNumber, input, preneurId, defenderIds, partnerId)
         }
+        onEditCoinche={(roundNumber, input, attack, defense) =>
+          editCoincheRound(id, roundNumber, input, attack, defense)
+        }
       />
 
       {(session.module === "cumulative" || session.module === "cumulative-inverted") && (
@@ -179,6 +185,14 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
           onSubmit={(input, preneurId, defenderIds, partnerId) =>
             submitTarotRound(id, input, preneurId, defenderIds, partnerId)
           }
+        />
+      )}
+
+      {session.module === "coinche" && (
+        <CoincheRoundForm
+          players={session.players}
+          supportsCoincheLevel={gameDef?.supportsCoincheLevel}
+          onSubmit={(input, attack, defense) => submitCoincheRound(id, input, attack, defense)}
         />
       )}
     </div>

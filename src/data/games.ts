@@ -17,6 +17,8 @@ export interface GameDefinition {
   supportsCustomName?: boolean;
   /** "Divers" : permet de fixer une fin de partie (score cible ou nombre de manches). */
   supportsEndCondition?: boolean;
+  /** Coinche/Contrée : true = propose Coinché/Surcoinché (Coinchée uniquement, pas Contrée). */
+  supportsCoincheLevel?: boolean;
 }
 
 export const GAME_LIBRARY: GameDefinition[] = [
@@ -83,6 +85,28 @@ export const GAME_LIBRARY: GameDefinition[] = [
     gradient: "from-indigo-300 to-violet-400",
     minPlayers: 3,
     maxPlayers: 5,
+  },
+  {
+    id: "coinche",
+    name: "Belote Coinchée",
+    emoji: "🎯",
+    tagline: "Enchères, contre & surcontre — 4 joueurs",
+    module: "coinche",
+    gradient: "from-cyan-300 to-blue-400",
+    minPlayers: 4,
+    maxPlayers: 4,
+    supportsCoincheLevel: true,
+  },
+  {
+    id: "contree",
+    name: "Belote Contrée",
+    emoji: "📣",
+    tagline: "Enchères chiffrées — 4 joueurs",
+    module: "coinche",
+    gradient: "from-lime-300 to-emerald-400",
+    minPlayers: 4,
+    maxPlayers: 4,
+    supportsCoincheLevel: false,
   },
 ];
 

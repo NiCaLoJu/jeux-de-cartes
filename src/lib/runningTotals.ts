@@ -3,7 +3,7 @@
 // module since it replays the same per-round apply functions the session
 // store uses to compute its final totals.
 
-import { Player, applyBeloteRound, applyCumulativeRound, applyTarotRound } from "@/lib/engine";
+import { Player, applyBeloteRound, applyCoincheRound, applyCumulativeRound, applyTarotRound } from "@/lib/engine";
 import { RoundRecord } from "@/store/gameSessionStore";
 
 export interface RoundSnapshot {
@@ -23,6 +23,8 @@ export function computeRunningTotals(players: Player[], rounds: RoundRecord[]): 
       totals = applyBeloteRound(totals, round.attackTeamPlayerIds, round.defenseTeamPlayerIds, round.result);
     } else if (round.module === "tarot") {
       totals = applyTarotRound(totals, round.preneurId, round.defenderIds, round.result, round.partnerId);
+    } else if (round.module === "coinche") {
+      totals = applyCoincheRound(totals, round.attackTeamPlayerIds, round.defenseTeamPlayerIds, round.result);
     }
     snapshots.push({ roundNumber: round.roundNumber, totals: { ...totals } });
   }
