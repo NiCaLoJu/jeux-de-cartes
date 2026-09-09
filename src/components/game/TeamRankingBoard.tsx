@@ -38,22 +38,25 @@ export function TeamRankingBoard({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}
               transition={{ type: "spring", stiffness: 280, damping: 26 }}
-              className={`relative rounded-3xl bg-gradient-to-br ${TEAM_GRADIENTS[idx % TEAM_GRADIENTS.length]} p-[1px] shadow-md`}
+              className={`relative rounded-3xl bg-gradient-to-br ${TEAM_GRADIENTS[idx % TEAM_GRADIENTS.length]} p-[1px] shadow-md ${
+                leading ? "pt-4" : ""
+              }`}
             >
+              {leading && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 bg-white dark:bg-[#1c1c1e] rounded-full px-3 py-1 text-xs font-semibold shadow-md border border-black/5 dark:border-white/10 flex items-center gap-1 whitespace-nowrap"
+                >
+                  🔥 En tête
+                </motion.div>
+              )}
               <div
                 className={`rounded-3xl bg-white/70 dark:bg-black/30 backdrop-blur-xl flex flex-col items-center justify-center text-center ${
                   cast ? "py-10 px-6" : "py-6 px-4"
                 } ${leading ? "ring-2 ring-white/80" : ""}`}
               >
-                {leading && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white dark:bg-black/70 rounded-full px-3 py-1 text-xs font-semibold shadow flex items-center gap-1"
-                  >
-                    🔥 En tête
-                  </motion.div>
-                )}
+                {leading && <div className="h-3" aria-hidden />}
                 <div className="flex -space-x-3 mb-2">
                   {team.players.map((p) => (
                     <PlayerAvatar
