@@ -7,6 +7,7 @@ import { GAME_LIBRARY, GameDefinition } from "@/data/games";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GlossyButton } from "@/components/ui/GlossyButton";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { GameTile } from "@/components/game/GameTile";
 import { useGameSessionStore } from "@/store/gameSessionStore";
 import { useRosterStore } from "@/store/rosterStore";
 import { useAuthStore } from "@/store/authStore";
@@ -245,19 +246,14 @@ function NewGameContent() {
       <section>
         <h2 className="text-sm font-semibold opacity-70 mb-3 uppercase tracking-wide">1. Choisir un jeu</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {GAME_LIBRARY.map((game) => (
-            <motion.button
+          {GAME_LIBRARY.map((game, i) => (
+            <GameTile
               key={game.id}
-              type="button"
-              whileTap={{ scale: 0.96 }}
+              game={game}
+              index={i}
+              selected={selectedGame?.id === game.id}
               onClick={() => setSelectedGame(game)}
-              className={`rounded-3xl p-4 flex flex-col items-center gap-1 bg-gradient-to-br ${game.gradient} text-white shadow-md transition-all ${
-                selectedGame?.id === game.id ? "ring-4 ring-white/80 scale-[1.02]" : "opacity-80"
-              }`}
-            >
-              <span className="text-3xl">{game.emoji}</span>
-              <span className="font-semibold text-sm text-shadow-soft">{game.name}</span>
-            </motion.button>
+            />
           ))}
         </div>
       </section>
